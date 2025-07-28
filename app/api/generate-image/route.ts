@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model: 'dall-e-3',
         prompt,
-        size: '512x512', // 이미지 사이즈 명확히 지정
+        size: '1024x1024', // 이미지 사이즈 명확히 지정
         response_format: 'url',
       }),
     });
