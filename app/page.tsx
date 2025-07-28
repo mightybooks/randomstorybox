@@ -206,7 +206,7 @@ export default function Home() {
         </div>
       )}
 
-      {randomboxCurrent === 8 && (
+    {randomboxCurrent === 8 && (
         <div className="randombox-result">
           <h2>🌀 당신만의 기묘한 이야기</h2>
           <p>{randomboxStoryText}</p>
@@ -229,3 +229,5 @@ export default function Home() {
       )}
     </div>
   );
+}
+
