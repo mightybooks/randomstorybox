@@ -52,6 +52,18 @@ export default function Home() {
   const [statusText, setStatusText] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [questionOptions, setQuestionOptions] = useState<string[][]>([]);
+  const forbiddenWords = ['총', '피', '좀비', '살인', '죽음', '유혈', '폭력'];
+
+function sanitizePrompt(prompt: string) {
+  let sanitized = prompt;
+  forbiddenWords.forEach(word => {
+    if (sanitized.includes(word)) {
+      console.warn(`🚫 금지어 포함됨: ${word}`);
+      sanitized = sanitized.replaceAll(word, '평화');
+    }
+  });
+  return sanitized;
+}
 
   useEffect(() => {
     const shuffle = [...fullChoices];
@@ -104,26 +116,31 @@ export default function Home() {
         setRandomboxStoryText(story);
         setStoryFetched(true);
 
-        const fullPrompt = `${story} (${style} 스타일)`;
-        setStatusText("🖌 창작에 혼을 태우고 있어요...");
-        runTypingStatus();
+       const safeStory = sanitizePrompt(story);
+const safePrompt = `${safeStory} (${style} 스타일)`;
 
-        fetch("/api/generate-image", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: fullPrompt }),
-        })
-          .then(async (res) => {
-            const imgData = await res.json();
-            if (imgData.imageUrl) {
-              setImageUrl(imgData.imageUrl);
-            }
-            setImageFetched(true);
-          })
-          .catch((err) => {
-            console.error("🚨 이미지 요청 에러:", err);
-            setImageFetched(true);
-          });
+console.log("🧼 정제된 프롬프트:", safePrompt);
+        
+setStatusText("🖌 창작에 혼을 태우고 있어요...");
+runTypingStatus();
+
+fetch("/api/generate-image", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ prompt: safePrompt }),
+})
+  .then(async (res) => {
+    const imgData = await res.json();
+    if (imgData.imageUrl) {
+      setImageUrl(imgData.imageUrl);
+    }
+    setImageFetched(true);
+  })
+  .catch((err) => {
+    console.error("🚨 이미지 요청 에러:", err);
+    setImageFetched(true);
+  });
+
 
         setTimeout(() => {
           if (!imageFetched) {
