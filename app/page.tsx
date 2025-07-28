@@ -120,7 +120,10 @@ function sanitizePrompt(prompt: string) {
     // nextQuestion 내부, story 생성 이후 이미지 요청 직전 전체 교체
 const safeStory = sanitizePrompt(story);
 const safeStyle = style || "일본 애니"; // 스타일 누락 방지
-const safePrompt = `${safeStyle} 스타일로 묘사된 장면: ${safeStory}`;
+// const safeStyle = style || "일본 애니";
+// const safePrompt = `${safeStory} (${safeStyle} 스타일)`;
+const safePrompt = `${safeStory} (in the style of a Japanese manga panel)`;
+
 
 console.log("🧼 정제된 프롬프트:", safePrompt);
 
@@ -220,8 +223,9 @@ return (
     <div id="randombox-summary">
       {randomboxCurrent >= 6 && (
         <>
-          <strong>🧩 선택한 단어:</strong> {randomboxAnswers.slice(0, 5).join(", ")}<br />
-          <strong>🎬 장르:</strong> {randomboxAnswers[5]}
+    <strong>🧩 선택한 단어:</strong> {randomboxAnswers.slice(0, 5).join(", ")}<br />
+    <strong>🎬 장르:</strong> {randomboxAnswers[5]}<br />
+    <strong>🖼 스타일:</strong> {randomboxAnswers[6]}
         </>
       )}
     </div>
