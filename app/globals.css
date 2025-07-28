@@ -20,6 +20,19 @@
       font-size: 1.8rem;
       color: #5c4d3d;
     }
+.randombox-button {
+  padding: 10px 16px;
+  background-color: #5d3c2d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.randombox-button:hover {
+  background-color: #4a2e22;
+}
     .randombox-question {
       font-size: 1.2rem;
       margin-bottom: 1.5rem;
