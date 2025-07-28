@@ -166,3 +166,66 @@ export default function Home() {
 
     setCurrent(next);
   }
+  const q = randomboxQuestions[randomboxCurrent];
+  const options = q?.options || questionOptions[randomboxCurrent] || [];
+
+  return (
+    <div className="randombox-container">
+      {randomboxCurrent < 0 && (
+        <div className="randombox-question" style={{ textAlign: "center" }}>
+          <p>내면을 비추는 단어들이<br /><strong>당신만의 이야기가 된다면?</strong></p>
+          <p>무의식을 들추는 신묘한 이야기</p>
+          <p>즉흥적인 영감으로<br />즉석에서 바로 만들어 드립니다.</p>
+          <button id="randombox-startBtn" onClick={() => setCurrent(0)}>시작하기</button>
+        </div>
+      )}
+
+      {randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
+        <>
+          <div className="randombox-question">{q.q}</div>
+          {options.map((opt, idx) => (
+            <label key={idx} className="randombox-option">
+              <input type="radio" name={`q${randomboxCurrent}`} value={opt} /> {opt}
+            </label>
+          ))}
+        </>
+      )}
+
+      {randomboxCurrent === 7 && (
+        <div className="randombox-question">
+          <h2 className="text-xl font-bold mb-2">🖌️ 그림 스타일 선택 완료!</h2>
+          {stage === 'writing' && <><p>✍️ 지금 당신만의 이야기를 쓰는 중입니다...</p></>}
+          {stage === 'drawing' && <><p>🖼️ 이야기가 완성되었습니다! 이제 그림을 그리는 중이에요...</p></>}
+          {stage === 'done' && <><p>🎉 모든 생성이 완료되었습니다!</p><p>이제 이야기와 그림이 아래에 표시됩니다.</p></>}
+          <p>{statusText}</p>
+          <div id="randombox-summary">
+            <strong>🧩 표출:</strong> {randomboxAnswers.slice(0, 5).join(", ")}<br />
+            <strong>🎬 소망:</strong> {randomboxAnswers[5]}<br />
+            <strong>🖼 심연:</strong> {randomboxAnswers[6]}
+          </div>
+        </div>
+      )}
+
+      {randomboxCurrent === 8 && (
+        <div className="randombox-result">
+          <h2>🌀 당신만의 기묘한 이야기</h2>
+          <p>{randomboxStoryText}</p>
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              style={{ maxWidth: "100%", borderRadius: "12px", marginTop: "1rem" }}
+              alt="AI 생성 이미지"
+            />
+          ) : (
+            <p style={{ marginTop: "1rem" }}>🖼️ 이미지를 준비하고 있어요...</p>
+          )}
+        </div>
+      )}
+
+      {warningVisible && <div id="randombox-warning">선택지를 고르세요!</div>}
+
+      {randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
+        <button id="randombox-nextBtn" onClick={nextQuestion}>다음</button>
+      )}
+    </div>
+  );
