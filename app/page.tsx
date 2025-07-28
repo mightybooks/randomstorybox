@@ -90,6 +90,7 @@ export default function Home() {
     setCurrent(next);
 
     if (next === 6) {
+      console.log("🔥 현재 next 값:", next); // ✅ 여기에 딱 넣어
       const keywords = [...randomboxAnswers, (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value].slice(0, 5);
       const genre = (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value;
       try {
