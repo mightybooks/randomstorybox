@@ -123,9 +123,9 @@ export default function Home() {
           setStage('drawing');
 
           const style = randomboxAnswers[6];
-          const prompt = `A highly detailed Japanese anime illustration featuring ${keywords.join(", ")}, 
-            drawn in cel-shaded style, expressive faces, dramatic lighting, vibrant color palette, 
-            with a clean background, dynamic composition.`;
+          const prompt = `A dreamlike surreal illustration featuring ${keywords.join(", ")}, 
+            in soft focus, pastel tones, abstract backgrounds, ethereal atmosphere, 
+            mystical lighting, gently floating objects, emotional ambiguity.`;
 
           fetch("/api/generate-image", {
             method: "POST",
