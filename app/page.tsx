@@ -117,7 +117,7 @@ export default function Home() {
       }
     }
 
-    if (randomboxCurrent === 7) {
+    if (next === 7) {
       const style = (document.querySelector(`input[name="q6"]:checked`) as HTMLInputElement)?.value;
       setStatusText("🖌 창작에 혼을 태우고 있어요...");
 
