@@ -52,18 +52,18 @@ export default function Home() {
   const [statusText, setStatusText] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [questionOptions, setQuestionOptions] = useState<string[][]>([]);
-  const forbiddenWords = ['총', '피', '좀비', '살인', '죽음', '유혈', '폭력'];
+  const forbiddenWords = ['총', '피', '좀비', '살인', '죽음', '유혈', '폭력','식칼', '도둑', '수갑', '범죄', '작전', '제압', '범인', '적', '묶었다', '암살'];
 
 // 프롬프트 정제 함수 (컴포넌트 상단에 선언돼 있어야 함)
 function sanitizePrompt(prompt: string) {
-  const forbiddenWords = ['총', '피', '좀비', '살인', '죽음', '유혈', '폭력'];
+  let cleaned = prompt;
   for (const word of forbiddenWords) {
-    if (prompt.includes(word)) {
+    if (cleaned.includes(word)) {
       console.warn(`🚫 금지어 포함됨: ${word}`);
-      return prompt.replaceAll(word, '평화'); // 분위기 맞게 '마법' 등도 가능
+      cleaned = cleaned.replaceAll(word, '평화');
     }
   }
-  return prompt;
+  return cleaned;
 }
 
   useEffect(() => {
@@ -120,7 +120,7 @@ function sanitizePrompt(prompt: string) {
     // nextQuestion 내부, story 생성 이후 이미지 요청 직전 전체 교체
 const safeStory = sanitizePrompt(story);
 const safeStyle = style || "일본 애니"; // 스타일 누락 방지
-const safePrompt = `${safeStory} (${safeStyle} 스타일)`;
+const safePrompt = `${safeStyle} 스타일로 묘사된 장면: ${safeStory}`;
 
 console.log("🧼 정제된 프롬프트:", safePrompt);
 
