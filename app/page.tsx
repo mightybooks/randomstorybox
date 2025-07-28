@@ -149,60 +149,65 @@ export default function Home() {
   const q = randomboxQuestions[randomboxCurrent];
   const options = q?.options || questionOptions[randomboxCurrent] || [];
 
-  return (
-    <div className="randombox-container">
-      {randomboxCurrent < 0 && (
-        <div className="randombox-question" style={{ textAlign: "center" }}>
-          <p>내면을 비추는 단어들이<br /><strong>당신만의 이야기가 된다면?</strong></p>
-          <p>무의식을 들추는 신묘한 이야기</p>
-          <p>즉흥적인 영감으로<br />즉석에서 바로 만들어 드립니다.</p>
-        </div>
-      )}
+return (
+  <div className="randombox-container">
+    {randomboxCurrent < 0 && (
+      <div className="randombox-question" style={{ textAlign: "center" }}>
+        <p>내면을 비추는 단어들이<br /><strong>당신만의 이야기가 된다면?</strong></p>
+        <p>무의식을 들추는 신묘한 이야기</p>
+        <p>즉흥적인 영감으로<br />즉석에서 바로 만들어 드립니다.</p>
 
-      {randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
-        <>
-          <div className="randombox-question">{q.q}</div>
-          {options.map((opt, idx) => (
-            <label key={idx} className="randombox-option">
-              <input type="radio" name={`q${randomboxCurrent}`} value={opt} /> {opt}
-            </label>
-          ))}
-        </>
-      )}
-
-      {randomboxCurrent === 7 && (
-        <>
-          <h2>🌀 당신만의 기묘한 이야기</h2>
-          <p>{randomboxStoryText}</p>
-          {imageUrl ? (
-            <img
-              src={imageUrl}
-              style={{ maxWidth: "100%", borderRadius: "12px", marginTop: "1rem" }}
-            />
-          ) : (
-            <p style={{ marginTop: "1rem" }}>🖼️ 이미지를 준비하고 있어요...</p>
-          )}
-        </>
-      )}
-
-      {warningVisible && <div id="randombox-warning">선택지를 고르세요!</div>}
-
-      {randomboxCurrent >= 0 && randomboxCurrent < 7 && (
-        <button id="randombox-nextBtn" onClick={nextQuestion}>
-          {randomboxCurrent === 0 ? "시작하기" : "다음"}
+        <button id="randombox-startBtn" onClick={() => setCurrent(0)}>
+          시작하기
         </button>
-      )}
-
-      <div id="randombox-summary">
-        {randomboxCurrent >= 6 && (
-          <>
-            <strong>🧩 선택한 단어:</strong> {randomboxAnswers.slice(0, 5).join(", ")}<br />
-            <strong>🎬 장르:</strong> {randomboxAnswers[5]}
-          </>
-        )}
       </div>
+    )}
 
-      <div id="randombox-status-line">{statusText}</div>
+    {randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
+      <>
+        <div className="randombox-question">{q.q}</div>
+        {options.map((opt, idx) => (
+          <label key={idx} className="randombox-option">
+            <input type="radio" name={`q${randomboxCurrent}`} value={opt} /> {opt}
+          </label>
+        ))}
+      </>
+    )}
+
+    {randomboxCurrent === 7 && (
+      <>
+        <h2>🌀 당신만의 기묘한 이야기</h2>
+        <p>{randomboxStoryText}</p>
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            style={{ maxWidth: "100%", borderRadius: "12px", marginTop: "1rem" }}
+          />
+        ) : (
+          <p style={{ marginTop: "1rem" }}>🖼️ 이미지를 준비하고 있어요...</p>
+        )}
+      </>
+    )}
+
+    {warningVisible && <div id="randombox-warning">선택지를 고르세요!</div>}
+
+    {randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
+      <button id="randombox-nextBtn" onClick={nextQuestion}>
+        다음
+      </button>
+    )}
+
+    <div id="randombox-summary">
+      {randomboxCurrent >= 6 && (
+        <>
+          <strong>🧩 선택한 단어:</strong> {randomboxAnswers.slice(0, 5).join(", ")}<br />
+          <strong>🎬 장르:</strong> {randomboxAnswers[5]}
+        </>
+      )}
     </div>
-  );
+
+    <div id="randombox-status-line">{statusText}</div>
+  </div>
+);
+
 }
