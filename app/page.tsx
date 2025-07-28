@@ -191,20 +191,27 @@ export default function Home() {
         </>
       )}
 
-      {randomboxCurrent === 7 && (
-        <div className="randombox-question">
-          <h2 className="text-xl font-bold mb-2">🖌️ 그림 스타일 선택 완료!</h2>
-          {stage === 'writing' && <><p>✍️ 지금 당신만의 이야기를 쓰는 중입니다...</p></>}
-          {stage === 'drawing' && <><p>🖼️ 이야기가 완성되었습니다! 이제 그림을 그리는 중이에요...</p></>}
-          {stage === 'done' && <><p>🎉 모든 생성이 완료되었습니다!</p><p>이제 이야기와 그림이 아래에 표시됩니다.</p></>}
-          <p>{statusText}</p>
-          <div id="randombox-summary">
-            <strong>🧩 표출:</strong> {randomboxAnswers.slice(0, 5).join(", ")}<br />
-            <strong>🎬 소망:</strong> {randomboxAnswers[5]}<br />
-            <strong>🖼 심연:</strong> {randomboxAnswers[6]}
-          </div>
-        </div>
-      )}
+     {randomboxCurrent === 7 && (
+  <div className="randombox-question">
+    <h2 className="text-xl font-bold mb-2">🖌️ 그림 스타일 선택 완료!</h2>
+    {stage === 'writing' && <><p>✍️ 지금 당신만의 이야기를 쓰는 중입니다...</p></>}
+    {stage === 'drawing' && <><p>🖼️ 이야기가 완성되었습니다! 이제 그림을 그리는 중이에요...</p></>}
+    {stage === 'done' && <><p>🎉 모든 생성이 완료되었습니다!</p><p>이제 이야기와 그림이 아래에 표시됩니다.</p></>}
+    <p>{statusText}</p>
+    <div id="randombox-summary">
+      <strong>🧩 표출:</strong> {randomboxAnswers.slice(0, 5).join(", ")}<br />
+      <strong>🎬 소망:</strong> {randomboxAnswers[5]}<br />
+      <strong>🖼 심연:</strong> {randomboxAnswers[6]}
+    </div>
+
+    {/* ✅ 여기에 버튼 추가 */}
+    {stage !== 'done' && (
+      <button onClick={nextQuestion} className="randombox-nextBtn" style={{ marginTop: "1.5rem" }}>
+        👉 다음
+      </button>
+    )}
+  </div>
+)}
 
 {randomboxCurrent === 8 && (
   <div className="randombox-result">
