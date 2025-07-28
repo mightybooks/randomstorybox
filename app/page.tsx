@@ -237,21 +237,23 @@ return (
         <div className="randombox-share" style={{ marginTop: "2rem" }}>
           <h3 className="text-lg font-semibold">🔗 공유하기</h3>
           <div className="flex flex-col gap-2 mt-2">
-            <button
+           <button
               onClick={() => {
-                navigator.clipboard.writeText(window.location.origin);
-                alert("✅ 링크가 복사되었습니다! 친구에게 보내보세요.");
+              const baseUrl = "https://randomstorybox.vercel.app";
+              navigator.clipboard.writeText(baseUrl);
+                alert("✅ 사이트 주소가 복사되었습니다! 친구에게 보내보세요.");
               }}
             >
               🧪 랜덤서사박스 새로 해보기 링크 공유
             </button>
 
-            <button
-              onClick={() => {
-                const shareText = `✨ 내가 만든 이야기:\n\n${randomboxStoryText}\n\n📷 그림: ${imageUrl}`;
-                navigator.clipboard.writeText(shareText);
-                alert("✅ 결과물이 복사되었습니다! SNS나 메신저에 붙여넣어보세요.");
-              }}
+      <button
+        onClick={() => {
+        const baseUrl = "https://randomstorybox.vercel.app";
+        const shareText = `✨ 내가 만든 이야기:\n\n${randomboxStoryText.trim()}\n\n👉 나만의 이야기를 만들고 싶다면?\n${baseUrl}`;
+        navigator.clipboard.writeText(shareText);
+        alert("✅ 이야기와 링크가 복사되었습니다! SNS나 메신저에 붙여보세요.");
+          }}
             >
               🌈 내 이야기 결과물 공유
             </button>
