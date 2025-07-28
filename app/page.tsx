@@ -176,7 +176,10 @@ return (
         <p>내면을 비추는 단어들이<br /><strong>당신만의 이야기가 된다면?</strong></p>
         <p>무의식을 들추는 신묘한 이야기</p>
         <p>즉흥적인 영감으로<br />즉석에서 바로 만들어 드립니다.</p>
-        <button id="randombox-startBtn" onClick={() => setCurrent(0)}>시작하기</button>
+         <button id="randombox-startBtn" className="randombox-button" onClick={() => setCurrent(0)} style={{ marginTop: "1.5rem" }}>시작하기</button>
+        <div style={{ marginTop: "2rem", fontSize: "0.8rem", color: "#888" }}>
+          🛠 Copyright ⓒ Mightybooks 문수림 · RFstory v0.6
+          </div>
       </div>
     )}
 
