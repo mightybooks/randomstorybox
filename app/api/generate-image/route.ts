@@ -29,6 +29,7 @@ export async function POST(req: Request) {
 
     const data = await response.json();
     const imageUrl = data.data?.[0]?.url || '';
+    console.log('🔥 OpenAI 전체 응답:', JSON.stringify(data, null, 2));
     console.log('✅ 이미지 생성 성공:', imageUrl);
 
     return NextResponse.json({ imageUrl });
