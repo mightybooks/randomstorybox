@@ -76,88 +76,88 @@ export default function Home() {
   }
 
   async function nextQuestion() {
-    if (randomboxCurrent >= 0 && randomboxCurrent <= 6) {
-      const radios = document.querySelector(`input[name="q${randomboxCurrent}"]:checked`) as HTMLInputElement;
-      if (!radios) {
-        setWarningVisible(true);
-        setTimeout(() => setWarningVisible(false), 2000);
-        return;
-      }
-      setAnswers(prev => [...prev, radios.value]);
+  if (randomboxCurrent >= 0 && randomboxCurrent <= 6) {
+    const radios = document.querySelector(`input[name="q${randomboxCurrent}"]:checked`) as HTMLInputElement;
+    if (!radios) {
+      setWarningVisible(true);
+      setTimeout(() => setWarningVisible(false), 2000);
+      return;
     }
-
-    const next = randomboxCurrent + 1;
-    setCurrent(next);
-
-    if (next === 6) {
-      const keywords = [...randomboxAnswers, (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value].slice(0, 5);
-      const genre = (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value;
-
-try {
-    const res = await fetch("/api/generate-story", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ keywords, genre }),
-    });
-    const data = await res.json();
-    setRandomboxStoryText(data.story || "이야기 생성 실패");
-    setStoryFetched(true);
-  } catch (err) {
-    console.error("스토리 생성 실패:", err);
-    setRandomboxStoryText("이야기 생성 실패");
-    setStoryFetched(true);
+    setAnswers(prev => [...prev, radios.value]);
   }
-      
-  // ✅ 강제로 다음 단계로 넘김
-  setCurrent(7);
-  return; // 이걸 안 넣으면 아래 7단계 코드가 중복 실행될 수도 있음
-}
 
-    if (next === 7) {
-  console.log("🎯 이미지 요청 시작 준비됨");
-  
-  setTimeout(async () => {
-    console.log("🔔 이미지 요청 시작됨");
+  const next = randomboxCurrent + 1;
 
-    const style = (document.querySelector(`input[name="q6"]:checked`) as HTMLInputElement)?.value;
-    setStatusText("🖌 창작에 혼을 태우고 있어요...");
+  // ✅ 6단계에서는 이야기 생성 + 이미지 요청 모두 여기서 수행
+  if (next === 6) {
+    setCurrent(6); // 일단 스테이지는 6으로 진입시켜야 하니까
 
-    await runTypingStatus();
-
-    const waitUntilStory = () =>
-      new Promise<void>(resolve => {
-        const check = () => {
-          if (storyFetched) resolve();
-          else setTimeout(check, 300);
-        };
-        check();
-      });
-
-    await waitUntilStory();
-
-    console.log("📦 이미지 프롬프트 생성:", randomboxStoryText);
-
-    const fullPrompt = `${randomboxStoryText} (${style} 스타일)`;
+    const keywords = [...randomboxAnswers, (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value].slice(0, 5);
+    const genre = (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value;
 
     try {
-      const imgRes = await fetch("/api/generate-image", {
+      const res = await fetch("/api/generate-story", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keywords, genre }),
+      });
+      const data = await res.json();
+      const story = data.story || "이야기 생성 실패";
+
+      setRandomboxStoryText(story);
+      setStoryFetched(true);
+
+      // 🎯 이미지 요청 바로 시작
+      const style = randomboxAnswers[6];
+      const fullPrompt = `${story} (${style} 스타일)`;
+
+      setStatusText("🖌 창작에 혼을 태우고 있어요...");
+      runTypingStatus();
+
+      fetch("/api/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: fullPrompt }),
-      });
-      const imgData = await imgRes.json();
-      if (imgData.imageUrl) {
-        console.log("✅ 이미지 URL 설정됨:", imgData.imageUrl);
-        setImageUrl(imgData.imageUrl);
-      }
-      setImageFetched(true);
+      })
+        .then(async (res) => {
+          const imgData = await res.json();
+          if (imgData.imageUrl) {
+            console.log("✅ 이미지 URL 설정됨:", imgData.imageUrl);
+            setImageUrl(imgData.imageUrl);
+          } else {
+            console.error("❌ 이미지 응답 실패:", imgData);
+          }
+          setImageFetched(true);
+        })
+        .catch((err) => {
+          console.error("🚨 이미지 요청 에러:", err);
+          setImageFetched(true);
+        });
+
+      // ⏳ 백업 타이머: 15초 안에 안 오면 강제 완료 처리
+      setTimeout(() => {
+        if (!imageFetched) {
+          console.warn("⏱️ 이미지 응답 지연됨, 수동 완료 처리");
+          setImageFetched(true);
+          setStatusText("🕒 이미지 응답이 지연되고 있어요. 잠시 후 다시 확인해 주세요!");
+        }
+      }, 15000);
+
+      // 7단계로 이동
+      setCurrent(7);
+      return;
     } catch (err) {
-      console.error("이미지 생성 실패:", err);
-      setImageFetched(true);
+      console.error("🔥 이야기 생성 실패:", err);
+      setRandomboxStoryText("이야기 생성 실패");
+      setStoryFetched(true);
+      setCurrent(7); // 실패해도 넘어가긴 해야 하니
+      return;
     }
-  }, 100);
-}
   }
+
+  // 나머지 단계는 기본 흐름대로
+  setCurrent(next);
+}
 
   const q = randomboxQuestions[randomboxCurrent];
   const options = q?.options || questionOptions[randomboxCurrent] || [];
@@ -183,13 +183,20 @@ try {
         </>
       )}
 
-      {randomboxCurrent === 7 && (
-        <>
-          <h2>🌀 당신만의 기묘한 이야기</h2>
-          <p>{randomboxStoryText}</p>
-          {imageUrl && <img src={imageUrl} style={{ maxWidth: "100%", borderRadius: "12px", marginTop: "1rem" }} />}
-        </>
-      )}
+    {randomboxCurrent === 7 && (
+  <>
+    <h2>🌀 당신만의 기묘한 이야기</h2>
+    <p>{randomboxStoryText}</p>
+    {imageUrl ? (
+      <img
+        src={imageUrl}
+        style={{ maxWidth: "100%", borderRadius: "12px", marginTop: "1rem" }}
+      />
+    ) : (
+      <p style={{ marginTop: "1rem" }}>🖼️ 이미지를 준비하고 있어요...</p>
+    )}
+  </>
+)}
 
       {warningVisible && <div id="randombox-warning">선택지를 고르세요!</div>}
 
