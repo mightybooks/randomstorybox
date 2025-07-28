@@ -180,16 +180,17 @@ export default function Home() {
         </div>
       )}
 
-      {randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
-        <>
-          <div className="randombox-question">{q.q}</div>
-          {options.map((opt, idx) => (
-            <label key={idx} className="randombox-option">
-              <input type="radio" name={`q${randomboxCurrent}`} value={opt} /> {opt}
-            </label>
-          ))}
-        </>
-      )}
+ {randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
+  <>
+    <div className="randombox-question">{q.q}</div>
+    {options.map((opt, idx) => (
+      <label key={idx} className="randombox-option">
+        <input type="radio" name={`q${randomboxCurrent}`} value={opt} /> {opt}
+      </label>
+    ))}
+    <button id="randombox-nextBtn" onClick={nextQuestion}>다음</button>
+  </>
+)}
 
      {randomboxCurrent === 7 && (
   <div className="randombox-question">
