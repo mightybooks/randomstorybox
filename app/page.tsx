@@ -123,7 +123,9 @@ export default function Home() {
           setStage('drawing');
 
           const style = randomboxAnswers[6];
-          const prompt = `A surreal illustration of ${keywords.join(", ")}, in the style of ${style}`;
+          const prompt = `A highly detailed Japanese anime illustration featuring ${keywords.join(", ")}, 
+            drawn in cel-shaded style, expressive faces, dramatic lighting, vibrant color palette, 
+            with a clean background, dynamic composition.`;
 
           fetch("/api/generate-image", {
             method: "POST",
