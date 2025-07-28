@@ -93,25 +93,25 @@ export default function Home() {
       const keywords = [...randomboxAnswers, (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value].slice(0, 5);
       const genre = (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value;
 
-      try {
-        const res = await fetch("/api/generate-story", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ keywords, genre }),
-        });
-        const data = await res.json();
-        setRandomboxStoryText(data.story || "이야기 생성 실패");
-        setStoryFetched(true);
-
-        // 자동 7단계 진입
-        setCurrent(7);
-      } catch (err) {
-        console.error("스토리 생성 실패:", err);
-        setRandomboxStoryText("이야기 생성 실패");
-        setStoryFetched(true);
-        setCurrent(7); // 실패해도 진입
-      }
-    }
+try {
+    const res = await fetch("/api/generate-story", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ keywords, genre }),
+    });
+    const data = await res.json();
+    setRandomboxStoryText(data.story || "이야기 생성 실패");
+    setStoryFetched(true);
+  } catch (err) {
+    console.error("스토리 생성 실패:", err);
+    setRandomboxStoryText("이야기 생성 실패");
+    setStoryFetched(true);
+  }
+      
+  // ✅ 강제로 다음 단계로 넘김
+  setCurrent(7);
+  return; // 이걸 안 넣으면 아래 7단계 코드가 중복 실행될 수도 있음
+}
 
     if (next === 7) {
   console.log("🎯 이미지 요청 시작 준비됨");
