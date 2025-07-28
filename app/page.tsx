@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 export default function Home() {
+  // ✅ 단어 리스트
   const fullChoices = [
     "하마", "쇼핑몰", "손세정제", "가습기", "플랑크톤",
     "마이크", "무당", "무전기", "스파게티", "사다리",
@@ -16,6 +17,7 @@ export default function Home() {
     "열쇠", "리모컨", "콘드로이친", "붕대", "무좀"
   ];
 
+  // ✅ 질문 리스트
   const randomboxQuestions = [
     { q: "1. 당신은 바닷가에 도착했다. 가장 먼저 눈에 들어온 것은?" },
     { q: "2. 비 오는 날, 동료가 우산 대신 건넨 것은?" },
@@ -100,22 +102,18 @@ export default function Home() {
     if (next === 7) {
       const style = (document.querySelector(`input[name="q6"]:checked`) as HTMLInputElement)?.value;
       setStatusText("🖌 창작에 혼을 태우고 있어요...");
-
       await runTypingStatus();
 
-      const waitUntilStory = () =>
-        new Promise<void>(resolve => {
-          const check = () => {
-            if (storyFetched) resolve();
-            else setTimeout(check, 300);
-          };
-          check();
-        });
-
+      const waitUntilStory = () => new Promise<void>(resolve => {
+        const check = () => {
+          if (storyFetched) resolve();
+          else setTimeout(check, 300);
+        };
+        check();
+      });
       await waitUntilStory();
 
       const fullPrompt = `${randomboxStoryText} (${style} 스타일)`;
-
       try {
         const imgRes = await fetch("/api/generate-image", {
           method: "POST",
@@ -123,17 +121,11 @@ export default function Home() {
           body: JSON.stringify({ prompt: fullPrompt }),
         });
         const imgData = await imgRes.json();
-
-        console.log("🔥 이미지 응답 확인:", imgData);
-
-        if (imgData.imageUrl) {
-          setImageUrl(imgData.imageUrl);
-          setImageFetched(true);
-        } else {
-          console.warn("🎨 이미지 URL이 비어있습니다.");
-        }
+        if (imgData.imageUrl) setImageUrl(imgData.imageUrl);
+        setImageFetched(true);
       } catch (err) {
         console.error("이미지 생성 실패:", err);
+        setImageFetched(true);
       }
     }
   }
@@ -178,15 +170,7 @@ export default function Home() {
         <>
           <h2>🌀 당신만의 기묘한 이야기</h2>
           <p>{randomboxStoryText}</p>
-          {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt="생성된 이미지"
-              style={{ maxWidth: "100%", borderRadius: "12px", marginTop: "1rem" }}
-            />
-          ) : (
-            <p>🖼️ 이미지를 준비하고 있어요...</p>
-          )}
+          {imageUrl && <img src={imageUrl} style={{ maxWidth: "100%", borderRadius: "12px", marginTop: "1rem" }} />}
         </>
       )}
 
@@ -203,7 +187,6 @@ export default function Home() {
           </>
         )}
       </div>
-
       <div id="randombox-status-line">{statusText}</div>
     </div>
   );
