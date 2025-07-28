@@ -75,76 +75,78 @@ export default function Home() {
     }
   }
 
-  async function nextQuestion() {
-    if (randomboxCurrent >= 0 && randomboxCurrent <= 6) {
-      const radios = document.querySelector(`input[name="q${randomboxCurrent}"]:checked`) as HTMLInputElement;
-      if (!radios) {
-        setWarningVisible(true);
-        setTimeout(() => setWarningVisible(false), 2000);
-        return;
-      }
-      setAnswers(prev => [...prev, radios.value]);
+ async function nextQuestion() {
+  if (randomboxCurrent >= 0 && randomboxCurrent <= 6) {
+    const radios = document.querySelector(`input[name="q${randomboxCurrent}"]:checked`) as HTMLInputElement;
+    if (!radios) {
+      setWarningVisible(true);
+      setTimeout(() => setWarningVisible(false), 2000);
+      return;
     }
+    setAnswers(prev => [...prev, radios.value]);
+  }
 
-    const next = randomboxCurrent + 1;
-    setCurrent(next);
+  const next = randomboxCurrent + 1;
+  setCurrent(next);
 
-    if (next === 6) {
-      console.log("🔥 현재 next 값:", next); // ✅ 여기에 딱 넣어
-      const keywords = [...randomboxAnswers, (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value].slice(0, 5);
-      const genre = (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value;
-      try {
-        const res = await fetch("/api/generate-story", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ keywords, genre }),
-        });
-        const data = await res.json();
-        setStoryText(data.story || "이야기 생성 실패");
-        setStoryFetched(true);
-      } catch (err) {
-        console.error("스토리 생성 실패:", err);
-        setStoryText("이야기 생성 실패");
-        setStoryFetched(true);
-      }
-    }
-
-    if (next === 7) {
-      const style = (document.querySelector(`input[name="q6"]:checked`) as HTMLInputElement)?.value;
-      setStatusText("🖌 창작에 혼을 태우고 있어요...");
-
-      await runTypingStatus();
-
-      const waitUntilStory = () =>
-        new Promise<void>(resolve => {
-          const check = () => {
-            if (storyFetched) resolve();
-            else setTimeout(check, 300);
-          };
-          check();
-        });
-
-      await waitUntilStory();
-
-      const fullPrompt = `${randomboxStoryText} (${style} 스타일)`;
-
-      try {
-        const imgRes = await fetch("/api/generate-image", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: fullPrompt }),
-        });
-        const imgData = await imgRes.json();
-        if (imgData.imageUrl) {
-          setImageUrl(imgData.imageUrl);
-        }
-        setImageFetched(true);
-      } catch (err) {
-        console.error("이미지 생성 실패:", err);
-        setImageFetched(true);
-      }
+  // ✅ 수정: next → randomboxCurrent
+  if (randomboxCurrent === 6) {
+    console.log("🔥 현재 randomboxCurrent 값:", randomboxCurrent);
+    const keywords = [...randomboxAnswers, (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value].slice(0, 5);
+    const genre = (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value;
+    try {
+      const res = await fetch("/api/generate-story", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keywords, genre }),
+      });
+      const data = await res.json();
+      setStoryText(data.story || "이야기 생성 실패");
+      setStoryFetched(true);
+    } catch (err) {
+      console.error("스토리 생성 실패:", err);
+      setStoryText("이야기 생성 실패");
+      setStoryFetched(true);
     }
   }
+
+  // ✅ 수정: next → randomboxCurrent
+  if (randomboxCurrent === 7) {
+    const style = (document.querySelector(`input[name="q6"]:checked`) as HTMLInputElement)?.value;
+    setStatusText("🖌 창작에 혼을 태우고 있어요...");
+
+    await runTypingStatus();
+
+    const waitUntilStory = () =>
+      new Promise<void>(resolve => {
+        const check = () => {
+          if (storyFetched) resolve();
+          else setTimeout(check, 300);
+        };
+        check();
+      });
+
+    await waitUntilStory();
+
+    const fullPrompt = `${randomboxStoryText} (${style} 스타일)`;
+
+    try {
+      const imgRes = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: fullPrompt }),
+      });
+      const imgData = await imgRes.json();
+      if (imgData.imageUrl) {
+        setImageUrl(imgData.imageUrl);
+      }
+      setImageFetched(true);
+    } catch (err) {
+      console.error("이미지 생성 실패:", err);
+      setImageFetched(true);
+    }
+  }
+}
 
   const q = randomboxQuestions[randomboxCurrent];
   const options = q?.options || questionOptions[randomboxCurrent] || [];
