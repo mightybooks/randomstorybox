@@ -59,14 +59,7 @@
       font-weight: bold;
       text-align: center;
     }
-    #randombox-result {
-      margin-top: 2rem;
-      background-color: #f9f6f2;
-      padding: 1.5rem;
-      border-radius: 12px;
-      border: 1px solid #ddd;
-      white-space: pre-wrap;
-    }
+
     #randombox-status-line {
       font-style: italic;
       text-align: center;
@@ -87,4 +80,10 @@
   word-break: keep-all;
   opacity: 1; /* 초기값 */
 }
-  </style>
+#randombox-summary {
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+  color: #555;
+  text-align: center;
+}
+</style>
