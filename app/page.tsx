@@ -77,14 +77,6 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (storyFetched && stage === 'writing') setStage('drawing');
-  }, [storyFetched]);
-
-  useEffect(() => {
-    if (imageUrl && stage === 'drawing') setStage('done');
-  }, [imageUrl]);
-
-  useEffect(() => {
     let active = true;
     let index = 0;
     const messages = stage === 'writing' ? writingMessages : drawingMessages;
@@ -128,7 +120,7 @@ export default function Home() {
           const data = await res.json();
           setRandomboxStoryText(data.story || "이야기 생성 실패");
           setStoryFetched(true);
-          setCurrent(8);
+          setStage('drawing');
 
           const style = randomboxAnswers[6];
           const prompt = `A surreal illustration of ${keywords.join(", ")}, in the style of ${style}`;
@@ -142,17 +134,23 @@ export default function Home() {
               const imgData = await res.json();
               if (imgData.imageUrl) setImageUrl(imgData.imageUrl);
               setImageFetched(true);
+              setStage('done');
+              setCurrent(8);
             })
             .catch((err) => {
               console.error("🚨 이미지 요청 에러:", err);
               setImageFetched(true);
               setStatusText("🛑 이미지 생성에 실패했습니다.");
+              setStage('done');
+              setCurrent(8);
             });
 
           setTimeout(() => {
             if (!imageFetched) {
               setImageFetched(true);
               setStatusText("🕒 이미지 응답이 지연되고 있어요. 잠시 후 다시 확인해 주세요!");
+              setStage('done');
+              setCurrent(8);
             }
           }, 15000);
         })
@@ -160,6 +158,7 @@ export default function Home() {
           console.error("🔥 이야기 생성 실패:", err);
           setRandomboxStoryText("이야기 생성 실패");
           setStoryFetched(true);
+          setStage('done');
           setCurrent(8);
         });
       return;
@@ -167,68 +166,3 @@ export default function Home() {
 
     setCurrent(next);
   }
-
-  const q = randomboxQuestions[randomboxCurrent];
-  const options = q?.options || questionOptions[randomboxCurrent] || [];
-
-  return (
-    <div className="randombox-container">
-      {randomboxCurrent < 0 && (
-        <div className="randombox-question" style={{ textAlign: "center" }}>
-          <p>내면을 비추는 단어들이<br /><strong>당신만의 이야기가 된다면?</strong></p>
-          <p>무의식을 들추는 신묘한 이야기</p>
-          <p>즉흥적인 영감으로<br />즉석에서 바로 만들어 드립니다.</p>
-          <button id="randombox-startBtn" onClick={() => setCurrent(0)}>시작하기</button>
-        </div>
-      )}
-
-      {randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
-        <>
-          <div className="randombox-question">{q.q}</div>
-          {options.map((opt, idx) => (
-            <label key={idx} className="randombox-option">
-              <input type="radio" name={`q${randomboxCurrent}`} value={opt} /> {opt}
-            </label>
-          ))}
-        </>
-      )}
-
-      {randomboxCurrent === 7 && (
-        <div className="randombox-question">
-          <h2 className="text-xl font-bold mb-2">🖌️ 그림 스타일 선택 완료!</h2>
-          {stage === 'writing' && <><p>✍️ 지금 당신만의 이야기를 쓰는 중입니다...</p></>}
-          {stage === 'drawing' && <><p>🖼️ 이야기가 완성되었습니다! 이제 그림을 그리는 중이에요...</p></>}
-          {stage === 'done' && <><p>🎉 모든 생성이 완료되었습니다!</p><p>이제 이야기와 그림이 아래에 표시됩니다.</p></>}
-          <p>{statusText}</p>
-          <div id="randombox-summary">
-            <strong>🧩 표출:</strong> {randomboxAnswers.slice(0, 5).join(", ")}<br />
-            <strong>🎬 소망:</strong> {randomboxAnswers[5]}<br />
-            <strong>🖼 심연:</strong> {randomboxAnswers[6]}
-          </div>
-        </div>
-      )}
-
-      {randomboxCurrent === 8 && (
-        <div className="randombox-result">
-          <h2>🌀 당신만의 기묘한 이야기</h2>
-          <p>{randomboxStoryText}</p>
-          {imageUrl ? (
-            <img
-              src={imageUrl}
-              style={{ maxWidth: "100%", borderRadius: "12px", marginTop: "1rem" }}
-              alt="AI 생성 이미지"
-            />
-          ) : (
-            <p style={{ marginTop: "1rem" }}>🖼️ 이미지를 준비하고 있어요...</p>
-          )}
-        </div>
-      )}
-
-      {warningVisible && <div id="randombox-warning">선택지를 고르세요!</div>}
-
-      {randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
-        <button id="randombox-nextBtn" onClick={nextQuestion}>다음</button>
-      )}
-    </div>
-  );
-}
