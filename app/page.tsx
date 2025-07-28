@@ -180,8 +180,8 @@ export default function Home() {
         </div>
       )}
 
- {randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
-  <>
+{randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
+  <div className="randombox-question-section">
     <div className="randombox-question">{q.q}</div>
     {options.map((opt, idx) => (
       <label key={idx} className="randombox-option">
@@ -189,7 +189,7 @@ export default function Home() {
       </label>
     ))}
     <button id="randombox-nextBtn" onClick={nextQuestion}>다음</button>
-  </>
+  </div>
 )}
 
      {randomboxCurrent === 7 && (
