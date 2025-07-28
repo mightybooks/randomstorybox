@@ -47,7 +47,7 @@ export default function Home() {
   const [randomboxAnswers, setAnswers] = useState<string[]>([]);
   const [warningVisible, setWarningVisible] = useState(false);
   const [storyFetched, setStoryFetched] = useState(false);
-  const [randomboxStoryText, setStoryText] = useState('');
+  const [randomboxStoryText, setRandomboxStoryText] = useState('');
   const [imageFetched, setImageFetched] = useState(false);
   const [statusText, setStatusText] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -94,20 +94,23 @@ export default function Home() {
     console.log("🔥 현재 randomboxCurrent 값:", randomboxCurrent);
     const keywords = [...randomboxAnswers, (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value].slice(0, 5);
     const genre = (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value;
-    try {
-      const res = await fetch("/api/generate-story", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keywords, genre }),
-      });
-      const data = await res.json();
-      setStoryText(data.story || "이야기 생성 실패");
-      setStoryFetched(true);
-    } catch (err) {
-      console.error("스토리 생성 실패:", err);
-      setStoryText("이야기 생성 실패");
-      setStoryFetched(true);
-    }
+try {
+  const res = await fetch("/api/generate-story", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ keywords, genre }),
+  });
+  const data = await res.json();
+
+  console.log("📦 OpenAI 응답 전체:", data);
+
+  setRandomboxStoryText(data.story || "이야기 생성 실패"); // ✅ 핵심 수정
+  setStoryFetched(true);
+} catch (err) {
+  console.error("스토리 생성 실패:", err);
+  setRandomboxStoryText("이야기 생성 실패");
+  setStoryFetched(true);
+}
   }
 
   // ✅ 수정: next → randomboxCurrent
