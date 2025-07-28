@@ -52,19 +52,6 @@ export default function Home() {
   const [statusText, setStatusText] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [questionOptions, setQuestionOptions] = useState<string[][]>([]);
-  const forbiddenWords = ['총', '피', '좀비', '살인', '죽음', '유혈', '폭력','식칼', '도둑', '수갑', '범죄', '작전', '제압', '범인', '적', '묶었다', '암살'];
-
-// 프롬프트 정제 함수 (컴포넌트 상단에 선언돼 있어야 함)
-function sanitizePrompt(prompt: string) {
-  let cleaned = prompt;
-  for (const word of forbiddenWords) {
-    if (cleaned.includes(word)) {
-      console.warn(`🚫 금지어 포함됨: ${word}`);
-      cleaned = cleaned.replaceAll(word, '평화');
-    }
-  }
-  return cleaned;
-}
 
   useEffect(() => {
     const shuffle = [...fullChoices];
@@ -103,67 +90,40 @@ function sanitizePrompt(prompt: string) {
 
     if (next === 7) {
       const keywords = randomboxAnswers.slice(0, 5);
-      const genre = randomboxAnswers[5];
-      const style = randomboxAnswers[6];
+      const prompt = sanitizePrompt(`A surreal illustration of ${keywords.join(", ")}, in the style of a Japanese manga panel`);
 
-      try {
-        const res = await fetch("/api/generate-story", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ keywords, genre }),
+      console.log("🖼️ 이미지 프롬프트:", prompt);
+
+      setStatusText("🖌 창작에 혼을 태우고 있어요...");
+      runTypingStatus();
+
+      fetch("/api/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      })
+        .then(async (res) => {
+          const imgData = await res.json();
+          if (imgData.imageUrl) {
+            setImageUrl(imgData.imageUrl);
+          }
+          setImageFetched(true);
+        })
+        .catch((err) => {
+          console.error("🚨 이미지 요청 에러:", err);
+          setImageFetched(true);
+          setStatusText("🛑 이미지 생성에 실패했습니다.");
         });
-        const data = await res.json();
-        const story = data.story || "이야기 생성 실패";
-        setRandomboxStoryText(story);
-        setStoryFetched(true);
 
-    // nextQuestion 내부, story 생성 이후 이미지 요청 직전 전체 교체
-const safeStory = sanitizePrompt(story);
-const safeStyle = style || "일본 애니"; // 스타일 누락 방지
-// const safeStyle = style || "일본 애니";
-// const safePrompt = `${safeStory} (${safeStyle} 스타일)`;
-const safePrompt = `${safeStory} (in the style of a Japanese manga panel)`;
+      setTimeout(() => {
+        if (!imageFetched) {
+          setImageFetched(true);
+          setStatusText("🕒 이미지 응답이 지연되고 있어요. 잠시 후 다시 확인해 주세요!");
+        }
+      }, 15000);
 
-
-console.log("🧼 정제된 프롬프트:", safePrompt);
-
-setStatusText("🖌 창작에 혼을 태우고 있어요...");
-runTypingStatus();
-
-fetch("/api/generate-image", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ prompt: safePrompt }),
-})
-  .then(async (res) => {
-    const imgData = await res.json();
-    if (imgData.imageUrl) {
-      setImageUrl(imgData.imageUrl);
-    }
-    setImageFetched(true);
-  })
-  .catch((err) => {
-    console.error("🚨 이미지 요청 에러:", err);
-    setImageFetched(true);
-    setStatusText("🛑 이미지 생성에 실패했습니다.");
-  });
-
-setTimeout(() => {
-  if (!imageFetched) {
-    setImageFetched(true);
-    setStatusText("🕒 이미지 응답이 지연되고 있어요. 잠시 후 다시 확인해 주세요!");
-  }
-}, 15000);
-
-        setCurrent(7);
-        return;
-      } catch (err) {
-        console.error("🔥 이야기 생성 실패:", err);
-        setRandomboxStoryText("이야기 생성 실패");
-        setStoryFetched(true);
-        setCurrent(7);
-        return;
-      }
+      setCurrent(7);
+      return;
     }
 
     setCurrent(next);
@@ -172,66 +132,64 @@ setTimeout(() => {
   const q = randomboxQuestions[randomboxCurrent];
   const options = q?.options || questionOptions[randomboxCurrent] || [];
 
-return (
-  <div className="randombox-container">
-    {randomboxCurrent < 0 && (
-      <div className="randombox-question" style={{ textAlign: "center" }}>
-        <p>내면을 비추는 단어들이<br /><strong>당신만의 이야기가 된다면?</strong></p>
-        <p>무의식을 들추는 신묘한 이야기</p>
-        <p>즉흥적인 영감으로<br />즉석에서 바로 만들어 드립니다.</p>
+  return (
+    <div className="randombox-container">
+      {randomboxCurrent < 0 && (
+        <div className="randombox-question" style={{ textAlign: "center" }}>
+          <p>내면을 비추는 단어들이<br /><strong>당신만의 이야기가 된다면?</strong></p>
+          <p>무의식을 들추는 신묘한 이야기</p>
+          <p>즉흥적인 영감으로<br />즉석에서 바로 만들어 드립니다.</p>
+          <button id="randombox-startBtn" onClick={() => setCurrent(0)}>
+            시작하기
+          </button>
+        </div>
+      )}
 
-        <button id="randombox-startBtn" onClick={() => setCurrent(0)}>
-          시작하기
-        </button>
-      </div>
-    )}
-
-    {randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
-      <>
-        <div className="randombox-question">{q.q}</div>
-        {options.map((opt, idx) => (
-          <label key={idx} className="randombox-option">
-            <input type="radio" name={`q${randomboxCurrent}`} value={opt} /> {opt}
-          </label>
-        ))}
-      </>
-    )}
-
-    {randomboxCurrent === 7 && (
-      <>
-        <h2>🌀 당신만의 기묘한 이야기</h2>
-        <p>{randomboxStoryText}</p>
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            style={{ maxWidth: "100%", borderRadius: "12px", marginTop: "1rem" }}
-          />
-        ) : (
-          <p style={{ marginTop: "1rem" }}>🖼️ 이미지를 준비하고 있어요...</p>
-        )}
-      </>
-    )}
-
-    {warningVisible && <div id="randombox-warning">선택지를 고르세요!</div>}
-
-    {randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
-      <button id="randombox-nextBtn" onClick={nextQuestion}>
-        다음
-      </button>
-    )}
-
-    <div id="randombox-summary">
-      {randomboxCurrent >= 6 && (
+      {randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
         <>
-    <strong>🧩 선택한 단어:</strong> {randomboxAnswers.slice(0, 5).join(", ")}<br />
-    <strong>🎬 장르:</strong> {randomboxAnswers[5]}<br />
-    <strong>🖼 스타일:</strong> {randomboxAnswers[6]}
+          <div className="randombox-question">{q.q}</div>
+          {options.map((opt, idx) => (
+            <label key={idx} className="randombox-option">
+              <input type="radio" name={`q${randomboxCurrent}`} value={opt} /> {opt}
+            </label>
+          ))}
         </>
       )}
+
+      {randomboxCurrent === 7 && (
+        <>
+          <h2>🌀 당신만의 기묘한 이야기</h2>
+          <p>{randomboxStoryText}</p>
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              style={{ maxWidth: "100%", borderRadius: "12px", marginTop: "1rem" }}
+            />
+          ) : (
+            <p style={{ marginTop: "1rem" }}>🖼️ 이미지를 준비하고 있어요...</p>
+          )}
+        </>
+      )}
+
+      {warningVisible && <div id="randombox-warning">선택지를 고르세요!</div>}
+
+      {randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
+        <button id="randombox-nextBtn" onClick={nextQuestion}>
+          다음
+        </button>
+      )}
+
+      <div id="randombox-summary">
+        {randomboxCurrent >= 6 && (
+          <>
+            <strong>🧩 선택한 단어:</strong> {randomboxAnswers.slice(0, 5).join(", ")}<br />
+            <strong>🎬 장르:</strong> {randomboxAnswers[5]}<br />
+            <strong>🖼 스타일:</strong> {randomboxAnswers[6]}
+          </>
+        )}
+      </div>
+
+      <div id="randombox-status-line">{statusText}</div>
     </div>
-
-    <div id="randombox-status-line">{statusText}</div>
-  </div>
-);
-
+  );
 }
