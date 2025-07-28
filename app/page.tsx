@@ -43,7 +43,7 @@ export default function Home() {
     "제대로 삽됐습니다!!"
   ];
 
-const [randomboxCurrent, setCurrent] = useState(-1);
+  const [randomboxCurrent, setCurrent] = useState(-1);
   const [randomboxAnswers, setAnswers] = useState<string[]>([]);
   const [warningVisible, setWarningVisible] = useState(false);
   const [storyFetched, setStoryFetched] = useState(false);
@@ -52,6 +52,7 @@ const [randomboxCurrent, setCurrent] = useState(-1);
   const [statusText, setStatusText] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [questionOptions, setQuestionOptions] = useState<string[][]>([]);
+  const [stage, setStage] = useState<'writing' | 'drawing' | 'done'>('writing');
 
   useEffect(() => {
     const shuffle = [...fullChoices];
@@ -62,6 +63,14 @@ const [randomboxCurrent, setCurrent] = useState(-1);
     const sliced = Array.from({ length: 6 }, (_, i) => shuffle.slice(i * 4, (i + 1) * 4));
     setQuestionOptions(sliced);
   }, []);
+
+  useEffect(() => {
+    if (storyFetched && stage === 'writing') setStage('drawing');
+  }, [storyFetched]);
+
+  useEffect(() => {
+    if (imageUrl && stage === 'drawing') setStage('done');
+  }, [imageUrl]);
 
   function wait(ms: number) {
     return new Promise(res => setTimeout(res, ms));
@@ -88,13 +97,11 @@ const [randomboxCurrent, setCurrent] = useState(-1);
 
     const next = randomboxCurrent + 1;
 
-    // ✨ 6번 끝나고 백그라운드에서 story 호출
     if (next === 7) {
-      setCurrent(7); // 7번 질문 화면 먼저 표시
+      setCurrent(7);
       const keywords = randomboxAnswers.slice(0, 5);
       const genre = randomboxAnswers[5];
 
-      // 🚀 story 백그라운드 생성
       fetch("/api/generate-story", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -102,12 +109,10 @@ const [randomboxCurrent, setCurrent] = useState(-1);
       })
         .then(async (res) => {
           const data = await res.json();
-          const story = data.story || "이야기 생성 실패";
-          setRandomboxStoryText(story);
+          setRandomboxStoryText(data.story || "이야기 생성 실패");
           setStoryFetched(true);
-          setCurrent(8); // 스토리 결과 화면으로 이동
+          setCurrent(8);
 
-          // 이미지 생성 진행
           const style = randomboxAnswers[6];
           const prompt = `A surreal illustration of ${keywords.join(", ")}, in the style of ${style}`;
           runTypingStatus();
@@ -119,9 +124,7 @@ const [randomboxCurrent, setCurrent] = useState(-1);
           })
             .then(async (res) => {
               const imgData = await res.json();
-              if (imgData.imageUrl) {
-                setImageUrl(imgData.imageUrl);
-              }
+              if (imgData.imageUrl) setImageUrl(imgData.imageUrl);
               setImageFetched(true);
             })
             .catch((err) => {
@@ -176,25 +179,33 @@ const [randomboxCurrent, setCurrent] = useState(-1);
 
       {randomboxCurrent === 7 && (
         <div className="randombox-question">
-          <p><strong>🎨 그림 스타일 선택 완료!</strong></p>
-          <p>지금 당신만의 이야기를 불러오는 중입니다...</p>
+          <h2 className="text-xl font-bold mb-2">🖌️ 그림 스타일 선택 완료!</h2>
+          {stage === 'writing' && <><p>✍️ 지금 당신만의 이야기를 쓰는 중입니다...</p><p className="text-sm text-gray-500">(이야기가 완성되면 AI 그림이 자동으로 생성됩니다)</p></>}
+          {stage === 'drawing' && <><p>🖼️ 이야기가 완성되었습니다!</p><p className="text-sm text-gray-500">이제 AI가 그림을 그리고 있어요...</p></>}
+          {stage === 'done' && <><p>🎉 모든 생성이 완료되었습니다!</p><p>이제 이야기와 그림이 아래에 표시됩니다.</p></>}
           <div id="randombox-status-line">{statusText}</div>
+          <div id="randombox-summary">
+            <strong>🧩 표출:</strong> {randomboxAnswers.slice(0, 5).join(", ")}<br />
+            <strong>🎬 소망:</strong> {randomboxAnswers[5]}<br />
+            <strong>🖼 심연:</strong> {randomboxAnswers[6]}
+          </div>
         </div>
       )}
 
       {randomboxCurrent === 8 && (
-        <>
+        <div className="randombox-result">
           <h2>🌀 당신만의 기묘한 이야기</h2>
           <p>{randomboxStoryText}</p>
           {imageUrl ? (
             <img
               src={imageUrl}
               style={{ maxWidth: "100%", borderRadius: "12px", marginTop: "1rem" }}
+              alt="AI 생성 이미지"
             />
           ) : (
             <p style={{ marginTop: "1rem" }}>🖼️ 이미지를 준비하고 있어요...</p>
           )}
-        </>
+        </div>
       )}
 
       {warningVisible && <div id="randombox-warning">선택지를 고르세요!</div>}
@@ -202,18 +213,6 @@ const [randomboxCurrent, setCurrent] = useState(-1);
       {randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
         <button id="randombox-nextBtn" onClick={nextQuestion}>다음</button>
       )}
-
-      <div id="randombox-summary">
-        {randomboxCurrent >= 6 && (
-          <>
-            <strong>🧩 표출:</strong> {randomboxAnswers.slice(0, 5).join(", ")}<br />
-            <strong>🎬 소망:</strong> {randomboxAnswers[5]}<br />
-            <strong>🖼 심연:</strong> {randomboxAnswers[6]}
-          </>
-        )}
-      </div>
-
-      <div id="randombox-status-line">{statusText}</div>
     </div>
   );
 }
