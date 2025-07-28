@@ -99,3 +99,20 @@
   text-align: center;
 }
 
+.randombox-share-button {
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  background-color: #f3f3f3;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.randombox-share-button:hover {
+  background-color: #e5e5e5;
+}
+
+.randombox-share-button:active {
+  background-color: #ddd;
+}
