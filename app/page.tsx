@@ -90,7 +90,7 @@ export default function Home() {
 
     if (next === 7) {
       const keywords = randomboxAnswers.slice(0, 5);
-      const prompt = sanitizePrompt(`A surreal illustration of ${keywords.join(", ")}, in the style of a Japanese manga panel`);
+      const prompt = `A surreal illustration of ${keywords.join(", ")}, in the style of a Japanese manga panel`;
 
       console.log("🖼️ 이미지 프롬프트:", prompt);
 
