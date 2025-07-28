@@ -206,27 +206,63 @@ export default function Home() {
         </div>
       )}
 
-    {randomboxCurrent === 8 && (
-        <div className="randombox-result">
-          <h2>🌀 당신만의 기묘한 이야기</h2>
-          <p>{randomboxStoryText}</p>
-          {imageUrl ? (
-            <img
-              src={imageUrl}
-              style={{ maxWidth: "100%", borderRadius: "12px", marginTop: "1rem" }}
-              alt="AI 생성 이미지"
-            />
-          ) : (
-            <p style={{ marginTop: "1rem" }}>🖼️ 이미지를 준비하고 있어요...</p>
-          )}
-        </div>
-      )}
+{randomboxCurrent === 8 && (
+  <div className="randombox-result">
+    <h2>🌀 당신만의 기묘한 이야기</h2>
+    
+    {imageUrl ? (
+      <img
+        src={imageUrl}
+        style={{ maxWidth: "100%", borderRadius: "12px", marginTop: "1rem" }}
+        alt="AI 생성 이미지"
+      />
+    ) : (
+      <p style={{ marginTop: "1rem" }}>🖼️ 이미지를 준비하고 있어요...</p>
+    )}
+    
+    <p>{randomboxStoryText}</p>
 
-      {warningVisible && <div id="randombox-warning">선택지를 고르세요!</div>}
+    {/* 🔗 공유하기 섹션 */}
+    <div className="randombox-share" style={{ marginTop: "2rem" }}>
+      <h3 className="text-lg font-semibold">🔗 공유하기</h3>
+      <div className="flex flex-col gap-2 mt-2">
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(window.location.origin);
+            alert("✅ 링크가 복사되었습니다! 친구에게 보내보세요.");
+          }}
+        >
+          🧪 랜덤서사박스 새로 해보기 링크 공유
+        </button>
 
-      {randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
-        <button id="randombox-nextBtn" onClick={nextQuestion}>다음</button>
-      )}
+        <button
+          onClick={() => {
+            const shareText = `✨ 내가 만든 이야기:\n\n${randomboxStoryText}\n\n📷 그림: ${imageUrl}`;
+            navigator.clipboard.writeText(shareText);
+            alert("✅ 결과물이 복사되었습니다! SNS나 메신저에 붙여넣어보세요.");
+          }}
+        >
+          🌈 내 이야기 결과물 공유
+        </button>
+       </div>
+
+      <button
+  onClick={() => {
+    setCurrent(-1);
+    setRandomboxAnswers([]); 
+    setStoryFetched(false);
+    setRandomboxStoryText('');
+    setImageFetched(false);
+    setImageUrl('');
+    setStage('writing');
+  }}
+>
+  🔄 다시 해보기
+</button>
+      
+    </div>
+  </div>
+)}
     </div>
   );
 }
