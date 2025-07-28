@@ -169,109 +169,111 @@ export default function Home() {
   const q = randomboxQuestions[randomboxCurrent];
   const options = q?.options || questionOptions[randomboxCurrent] || [];
 
-  return (
-    <div className="randombox-container">
-      {randomboxCurrent < 0 && (
-        <div className="randombox-question" style={{ textAlign: "center" }}>
-          <p>내면을 비추는 단어들이<br /><strong>당신만의 이야기가 된다면?</strong></p>
-          <p>무의식을 들추는 신묘한 이야기</p>
-          <p>즉흥적인 영감으로<br />즉석에서 바로 만들어 드립니다.</p>
-          <button id="randombox-startBtn" onClick={() => setCurrent(0)}>시작하기</button>
+return (
+  <div className="randombox-container">
+    {randomboxCurrent < 0 && (
+      <div className="randombox-question" style={{ textAlign: "center" }}>
+        <p>내면을 비추는 단어들이<br /><strong>당신만의 이야기가 된다면?</strong></p>
+        <p>무의식을 들추는 신묘한 이야기</p>
+        <p>즉흥적인 영감으로<br />즉석에서 바로 만들어 드립니다.</p>
+        <button id="randombox-startBtn" onClick={() => setCurrent(0)}>시작하기</button>
+      </div>
+    )}
+
+    {randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
+      <>
+        <div className="randombox-question">{q.q}</div>
+
+        {warningVisible && (
+          <div id="randombox-warning" style={{ color: 'red', marginBottom: '1rem' }}>
+            선택지를 고르세요!
+          </div>
+        )}
+
+        {options.map((opt, idx) => (
+          <label key={idx} className="randombox-option">
+            <input type="radio" name={`q${randomboxCurrent}`} value={opt} /> {opt}
+          </label>
+        ))}
+      </>
+    )}
+
+    {randomboxCurrent >= 0 && randomboxCurrent <= 6 && stage === 'writing' && (
+      <button id="randombox-nextBtn" onClick={nextQuestion}>다음</button>
+    )}
+
+    {randomboxCurrent === 7 && (
+      <div className="randombox-question">
+        <h2 className="text-xl font-bold mb-2">🖌️ 그림 스타일 선택 완료!</h2>
+        {stage === 'writing' && <><p>✍️ 지금 당신만의 이야기를 쓰는 중입니다...</p></>}
+        {stage === 'drawing' && <><p>🖼️ 이야기가 완성되었습니다! 이제 그림을 그리는 중이에요...</p></>}
+        {stage === 'done' && <><p>🎉 모든 생성이 완료되었습니다!</p><p>이제 이야기와 그림이 아래에 표시됩니다.</p></>}
+        <p>{statusText}</p>
+        <div id="randombox-summary">
+          <strong>🧩 표출:</strong> {randomboxAnswers.slice(0, 5).join(", ")}<br />
+          <strong>🎬 소망:</strong> {randomboxAnswers[5]}<br />
+          <strong>🖼 심연:</strong> {randomboxAnswers[6]}
         </div>
-      )}
+      </div>
+    )}
 
-{randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
-  <div className="randombox-question-section">
-    <div className="randombox-question">{q.q}</div>
-    {options.map((opt, idx) => (
-      <label key={idx} className="randombox-option">
-        <input type="radio" name={`q${randomboxCurrent}`} value={opt} /> {opt}
-      </label>
-    ))}
-    <button id="randombox-nextBtn" onClick={nextQuestion}>다음</button>
-  </div>
-)}
+    {randomboxCurrent === 8 && (
+      <div className="randombox-result">
+        <h2>🌀 당신만의 기묘한 이야기</h2>
 
-     {randomboxCurrent === 7 && (
-  <div className="randombox-question">
-    <h2 className="text-xl font-bold mb-2">🖌️ 그림 스타일 선택 완료!</h2>
-    {stage === 'writing' && <><p>✍️ 지금 당신만의 이야기를 쓰는 중입니다...</p></>}
-    {stage === 'drawing' && <><p>🖼️ 이야기가 완성되었습니다! 이제 그림을 그리는 중이에요...</p></>}
-    {stage === 'done' && <><p>🎉 모든 생성이 완료되었습니다!</p><p>이제 이야기와 그림이 아래에 표시됩니다.</p></>}
-    <p>{statusText}</p>
-    <div id="randombox-summary">
-      <strong>🧩 표출:</strong> {randomboxAnswers.slice(0, 5).join(", ")}<br />
-      <strong>🎬 소망:</strong> {randomboxAnswers[5]}<br />
-      <strong>🖼 심연:</strong> {randomboxAnswers[6]}
-    </div>
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            style={{ maxWidth: "100%", borderRadius: "12px", marginTop: "1rem" }}
+            alt="AI 생성 이미지"
+          />
+        ) : (
+          <p style={{ marginTop: "1rem" }}>🖼️ 이미지를 준비하고 있어요...</p>
+        )}
 
-    {/* ✅ 여기에 버튼 추가 */}
-    {stage !== 'done' && (
-      <button onClick={nextQuestion} className="randombox-nextBtn" style={{ marginTop: "1.5rem" }}>
-        👉 다음
-      </button>
+        <p>{randomboxStoryText}</p>
+
+        {/* 🔗 공유하기 섹션 */}
+        <div className="randombox-share" style={{ marginTop: "2rem" }}>
+          <h3 className="text-lg font-semibold">🔗 공유하기</h3>
+          <div className="flex flex-col gap-2 mt-2">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.origin);
+                alert("✅ 링크가 복사되었습니다! 친구에게 보내보세요.");
+              }}
+            >
+              🧪 랜덤서사박스 새로 해보기 링크 공유
+            </button>
+
+            <button
+              onClick={() => {
+                const shareText = `✨ 내가 만든 이야기:\n\n${randomboxStoryText}\n\n📷 그림: ${imageUrl}`;
+                navigator.clipboard.writeText(shareText);
+                alert("✅ 결과물이 복사되었습니다! SNS나 메신저에 붙여넣어보세요.");
+              }}
+            >
+              🌈 내 이야기 결과물 공유
+            </button>
+          </div>
+
+          <button
+            onClick={() => {
+              setCurrent(-1);
+              setAnswers([]);
+              setStoryFetched(false);
+              setRandomboxStoryText('');
+              setImageFetched(false);
+              setImageUrl('');
+              setStage('writing');
+            }}
+          >
+            🔄 다시 해보기
+          </button>
+        </div>
+      </div>
     )}
   </div>
-)}
-
-{randomboxCurrent === 8 && (
-  <div className="randombox-result">
-    <h2>🌀 당신만의 기묘한 이야기</h2>
-    
-    {imageUrl ? (
-      <img
-        src={imageUrl}
-        style={{ maxWidth: "100%", borderRadius: "12px", marginTop: "1rem" }}
-        alt="AI 생성 이미지"
-      />
-    ) : (
-      <p style={{ marginTop: "1rem" }}>🖼️ 이미지를 준비하고 있어요...</p>
-    )}
-    
-    <p>{randomboxStoryText}</p>
-
-    {/* 🔗 공유하기 섹션 */}
-    <div className="randombox-share" style={{ marginTop: "2rem" }}>
-      <h3 className="text-lg font-semibold">🔗 공유하기</h3>
-      <div className="flex flex-col gap-2 mt-2">
-        <button
-          onClick={() => {
-            navigator.clipboard.writeText(window.location.origin);
-            alert("✅ 링크가 복사되었습니다! 친구에게 보내보세요.");
-          }}
-        >
-          🧪 랜덤서사박스 새로 해보기 링크 공유
-        </button>
-
-        <button
-          onClick={() => {
-            const shareText = `✨ 내가 만든 이야기:\n\n${randomboxStoryText}\n\n📷 그림: ${imageUrl}`;
-            navigator.clipboard.writeText(shareText);
-            alert("✅ 결과물이 복사되었습니다! SNS나 메신저에 붙여넣어보세요.");
-          }}
-        >
-          🌈 내 이야기 결과물 공유
-        </button>
-       </div>
-
-      <button
-  onClick={() => {
-    setCurrent(-1);
-    setAnswers([]);
-    setStoryFetched(false);
-    setRandomboxStoryText('');
-    setImageFetched(false);
-    setImageUrl('');
-    setStage('writing');
-  }}
->
-  🔄 다시 해보기
-</button>
-      
-    </div>
-  </div>
-)}
-    </div>
-  );
+);
 }
 
