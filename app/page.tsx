@@ -54,15 +54,16 @@ export default function Home() {
   const [questionOptions, setQuestionOptions] = useState<string[][]>([]);
   const forbiddenWords = ['총', '피', '좀비', '살인', '죽음', '유혈', '폭력'];
 
+// 프롬프트 정제 함수 (컴포넌트 상단에 선언돼 있어야 함)
 function sanitizePrompt(prompt: string) {
-  let sanitized = prompt;
-  forbiddenWords.forEach(word => {
-    if (sanitized.includes(word)) {
+  const forbiddenWords = ['총', '피', '좀비', '살인', '죽음', '유혈', '폭력'];
+  for (const word of forbiddenWords) {
+    if (prompt.includes(word)) {
       console.warn(`🚫 금지어 포함됨: ${word}`);
-      sanitized = sanitized.replaceAll(word, '평화');
+      return prompt.replaceAll(word, '평화'); // 분위기 맞게 '마법' 등도 가능
     }
-  });
-  return sanitized;
+  }
+  return prompt;
 }
 
   useEffect(() => {
@@ -116,11 +117,13 @@ function sanitizePrompt(prompt: string) {
         setRandomboxStoryText(story);
         setStoryFetched(true);
 
-       const safeStory = sanitizePrompt(story);
-const safePrompt = `${safeStory} (${style} 스타일)`;
+    // nextQuestion 내부, story 생성 이후 이미지 요청 직전 전체 교체
+const safeStory = sanitizePrompt(story);
+const safeStyle = style || "일본 애니"; // 스타일 누락 방지
+const safePrompt = `${safeStory} (${safeStyle} 스타일)`;
 
 console.log("🧼 정제된 프롬프트:", safePrompt);
-        
+
 setStatusText("🖌 창작에 혼을 태우고 있어요...");
 runTypingStatus();
 
@@ -139,15 +142,15 @@ fetch("/api/generate-image", {
   .catch((err) => {
     console.error("🚨 이미지 요청 에러:", err);
     setImageFetched(true);
+    setStatusText("🛑 이미지 생성에 실패했습니다.");
   });
 
-
-        setTimeout(() => {
-          if (!imageFetched) {
-            setImageFetched(true);
-            setStatusText("🕒 이미지 응답이 지연되고 있어요. 잠시 후 다시 확인해 주세요!");
-          }
-        }, 15000);
+setTimeout(() => {
+  if (!imageFetched) {
+    setImageFetched(true);
+    setStatusText("🕒 이미지 응답이 지연되고 있어요. 잠시 후 다시 확인해 주세요!");
+  }
+}, 15000);
 
         setCurrent(7);
         return;
