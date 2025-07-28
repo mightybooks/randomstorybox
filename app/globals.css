@@ -1,26 +1,90 @@
-@import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap');
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background-color: #faf7f3;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .randombox-container {
+      max-width: 600px;
+      margin: 5rem auto;
+      padding: 2rem;
+      background-color: #fffef8;
+      box-shadow: 0 0 15px rgba(0,0,0,0.05);
+      border-radius: 16px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+      font-size: 1.8rem;
+      color: #5c4d3d;
+    }
+    .randombox-question {
+      font-size: 1.2rem;
+      margin-bottom: 1.5rem;
+      color: #3a2f1d;
+    }
+    .randombox-option {
+      display: block;
+      margin: 0.6rem 0;
+      padding: 0.6rem 1rem;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .randombox-option:hover {
+      background-color: #f5f2ed;
+    }
+    .randombox-option input {
+      margin-right: 0.8rem;
+    }
+    #randombox-nextBtn {
+      margin-top: 1.5rem;
+      padding: 0.6rem 1.5rem;
+      font-size: 1rem;
+      background-color: #7a5e48;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    #randombox-warning {
+      display: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      color: red;
+      margin-top: 1rem;
+      font-weight: bold;
+      text-align: center;
+    }
+    #randombox-result {
+      margin-top: 2rem;
+      background-color: #f9f6f2;
+      padding: 1.5rem;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      white-space: pre-wrap;
+    }
+    #randombox-status-line {
+      font-style: italic;
+      text-align: center;
+      font-size: 1rem;
+      margin-top: 1rem;
+      color: #6d5c4c;
+      min-height: 1.5rem;
+    }
+#randombox-status-line {
+  transition: all 0.3s ease;
+  font-style: italic;
+  text-align: center;
+  font-size: 1rem;
+  margin-top: 1rem;
+  color: #6d5c4c;
+  min-height: 1.5rem;
+  white-space: pre-line;
+  word-break: keep-all;
+  opacity: 1; /* 초기값 */
 }
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+  </style>
