@@ -81,57 +81,54 @@ export default function Home() {
       const keywords = [...randomboxAnswers, (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value].slice(0, 5);
       const genre = (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value;
 
-      fetch("/api/generate-story", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keywords, genre })
-      })
-        .then(res => res.json())
-        .then(data => {
-          setStoryText(data.story || "이야기 생성 실패");
-          setStoryFetched(true);
-        })
-        .catch(() => {
-          setStoryText("이야기 생성 실패");
-          setStoryFetched(true);
+      try {
+        const res = await fetch("/api/generate-story", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ keywords, genre }),
         });
+        const data = await res.json();
+        setStoryText(data.story || "이야기 생성 실패");
+        setStoryFetched(true);
+      } catch (err) {
+        console.error("스토리 생성 실패:", err);
+        setStoryText("이야기 생성 실패");
+        setStoryFetched(true);
+      }
     }
 
     if (next === 7) {
       const style = (document.querySelector(`input[name="q6"]:checked`) as HTMLInputElement)?.value;
       setStatusText("🖌 창작에 혼을 태우고 있어요...");
-
-      // 상태 메시지 타이핑 연출
       runTypingStatus();
 
-      // 스토리 기다렸다가 이미지 요청
-      const storyText = randomboxStoryText;
-      const fullPrompt = `${storyText} (${style} 스타일)`;
-
-      const waitUntil = () =>
-        new Promise(resolve => {
+      // 스토리 생성 완료를 기다리고 진행
+      const waitUntilStory = () =>
+        new Promise<void>(resolve => {
           const check = () => {
-            if (storyFetched) resolve(true);
+            if (storyFetched) resolve();
             else setTimeout(check, 300);
           };
           check();
         });
 
-      await waitUntil();
+      await waitUntilStory();
 
-      fetch("/api/generate-image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: fullPrompt })
-      })
-        .then(res => res.json())
-        .then(data => {
-          setImageUrl(data.imageUrl || '');
-          setImageFetched(true);
-        })
-        .catch(() => {
-          setImageFetched(true);
+      const fullPrompt = `${randomboxStoryText} (${style} 스타일)`;
+
+      try {
+        const imgRes = await fetch("/api/generate-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: fullPrompt }),
         });
+        const imgData = await imgRes.json();
+        setImageUrl(imgData.imageUrl || '');
+        setImageFetched(true);
+      } catch (err) {
+        console.error("이미지 생성 실패:", err);
+        setImageFetched(true);
+      }
     }
   }
 
