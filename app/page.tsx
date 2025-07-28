@@ -43,7 +43,7 @@ export default function Home() {
     "제대로 삽됐습니다!!"
   ];
 
-  const [randomboxCurrent, setCurrent] = useState(-1);
+const [randomboxCurrent, setCurrent] = useState(-1);
   const [randomboxAnswers, setAnswers] = useState<string[]>([]);
   const [warningVisible, setWarningVisible] = useState(false);
   const [storyFetched, setStoryFetched] = useState(false);
@@ -69,7 +69,7 @@ export default function Home() {
 
   async function runTypingStatus() {
     for (let i = 0; i < randomboxStatuses.length; i++) {
-      if (imageFetched) break;
+      if (imageFetched || randomboxCurrent !== 7) break;
       setStatusText(randomboxStatuses[i]);
       await wait(1200);
     }
@@ -88,55 +88,62 @@ export default function Home() {
 
     const next = randomboxCurrent + 1;
 
+    // ✨ 6번 끝나고 백그라운드에서 story 호출
     if (next === 7) {
+      setCurrent(7); // 7번 질문 화면 먼저 표시
       const keywords = randomboxAnswers.slice(0, 5);
       const genre = randomboxAnswers[5];
-      const style = randomboxAnswers[6];
 
-      try {
-        const res = await fetch("/api/generate-story", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ keywords, genre }),
-        });
-        const data = await res.json();
-        const story = data.story || "이야기 생성 실패";
-        setRandomboxStoryText(story);
-        setStoryFetched(true);
+      // 🚀 story 백그라운드 생성
+      fetch("/api/generate-story", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keywords, genre }),
+      })
+        .then(async (res) => {
+          const data = await res.json();
+          const story = data.story || "이야기 생성 실패";
+          setRandomboxStoryText(story);
+          setStoryFetched(true);
+          setCurrent(8); // 스토리 결과 화면으로 이동
 
-        const prompt = `A surreal illustration of ${keywords.join(", ")}, in the style of a Japanese manga panel`;
-        setStatusText("🖌 창작에 혼을 태우고 있어요...");
-        runTypingStatus();
+          // 이미지 생성 진행
+          const style = randomboxAnswers[6];
+          const prompt = `A surreal illustration of ${keywords.join(", ")}, in the style of ${style}`;
+          runTypingStatus();
 
-        fetch("/api/generate-image", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt }),
-        })
-          .then(async (res) => {
-            const imgData = await res.json();
-            if (imgData.imageUrl) {
-              setImageUrl(imgData.imageUrl);
-            }
-            setImageFetched(true);
+          fetch("/api/generate-image", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt }),
           })
-          .catch((err) => {
-            console.error("🚨 이미지 요청 에러:", err);
-            setImageFetched(true);
-            setStatusText("🛑 이미지 생성에 실패했습니다.");
-          });
+            .then(async (res) => {
+              const imgData = await res.json();
+              if (imgData.imageUrl) {
+                setImageUrl(imgData.imageUrl);
+              }
+              setImageFetched(true);
+            })
+            .catch((err) => {
+              console.error("🚨 이미지 요청 에러:", err);
+              setImageFetched(true);
+              setStatusText("🛑 이미지 생성에 실패했습니다.");
+            });
 
-        setTimeout(() => {
-          if (!imageFetched) {
-            setImageFetched(true);
-            setStatusText("🕒 이미지 응답이 지연되고 있어요. 잠시 후 다시 확인해 주세요!");
-          }
-        }, 15000);
-      } catch (err) {
-        console.error("🔥 이야기 생성 실패:", err);
-        setRandomboxStoryText("이야기 생성 실패");
-        setStoryFetched(true);
-      }
+          setTimeout(() => {
+            if (!imageFetched) {
+              setImageFetched(true);
+              setStatusText("🕒 이미지 응답이 지연되고 있어요. 잠시 후 다시 확인해 주세요!");
+            }
+          }, 15000);
+        })
+        .catch((err) => {
+          console.error("🔥 이야기 생성 실패:", err);
+          setRandomboxStoryText("이야기 생성 실패");
+          setStoryFetched(true);
+          setCurrent(8);
+        });
+      return;
     }
 
     setCurrent(next);
@@ -152,9 +159,7 @@ export default function Home() {
           <p>내면을 비추는 단어들이<br /><strong>당신만의 이야기가 된다면?</strong></p>
           <p>무의식을 들추는 신묘한 이야기</p>
           <p>즉흥적인 영감으로<br />즉석에서 바로 만들어 드립니다.</p>
-          <button id="randombox-startBtn" onClick={() => setCurrent(0)}>
-            시작하기
-          </button>
+          <button id="randombox-startBtn" onClick={() => setCurrent(0)}>시작하기</button>
         </div>
       )}
 
@@ -170,6 +175,14 @@ export default function Home() {
       )}
 
       {randomboxCurrent === 7 && (
+        <div className="randombox-question">
+          <p><strong>🎨 그림 스타일 선택 완료!</strong></p>
+          <p>지금 당신만의 이야기를 불러오는 중입니다...</p>
+          <div id="randombox-status-line">{statusText}</div>
+        </div>
+      )}
+
+      {randomboxCurrent === 8 && (
         <>
           <h2>🌀 당신만의 기묘한 이야기</h2>
           <p>{randomboxStoryText}</p>
@@ -179,10 +192,7 @@ export default function Home() {
               style={{ maxWidth: "100%", borderRadius: "12px", marginTop: "1rem" }}
             />
           ) : (
-            <div className="image-waiting" style={{ marginTop: "1rem", padding: "1rem", borderRadius: "8px", backgroundColor: "#f9f9f9" }}>
-              <p>🖼️ 이미지를 준비하고 있어요...</p>
-              <p style={{ fontSize: "0.9rem", color: "#666" }}>{statusText}</p>
-            </div>
+            <p style={{ marginTop: "1rem" }}>🖼️ 이미지를 준비하고 있어요...</p>
           )}
         </>
       )}
@@ -190,9 +200,7 @@ export default function Home() {
       {warningVisible && <div id="randombox-warning">선택지를 고르세요!</div>}
 
       {randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
-        <button id="randombox-nextBtn" onClick={nextQuestion}>
-          다음
-        </button>
+        <button id="randombox-nextBtn" onClick={nextQuestion}>다음</button>
       )}
 
       <div id="randombox-summary">
