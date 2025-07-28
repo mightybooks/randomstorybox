@@ -88,69 +88,57 @@ export default function Home() {
 
     const next = randomboxCurrent + 1;
 
- if (next === 7) {
-  const keywords = randomboxAnswers.slice(0, 5);
-  const genre = randomboxAnswers[5];
-  const style = randomboxAnswers[6];
+    if (next === 7) {
+      const keywords = randomboxAnswers.slice(0, 5);
+      const genre = randomboxAnswers[5];
+      const style = randomboxAnswers[6];
 
-  try {
-    const res = await fetch("/api/generate-story", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ keywords, genre }),
-    });
-    const data = await res.json();
-    const story = data.story || "이야기 생성 실패";
-    setRandomboxStoryText(story);
+      try {
+        const res = await fetch("/api/generate-story", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ keywords, genre }),
+        });
+        const data = await res.json();
+        const story = data.story || "이야기 생성 실패";
+        setRandomboxStoryText(story);
+        setStoryFetched(true);
 
-    // ✅ 여기에 로그 삽입
-    console.log("📖 생성된 스토리:", story);
+        const prompt = `A surreal illustration of ${keywords.join(", ")}, in the style of a Japanese manga panel`;
+        setStatusText("🖌 창작에 혼을 태우고 있어요...");
+        runTypingStatus();
 
-    setStoryFetched(true);
+        fetch("/api/generate-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt }),
+        })
+          .then(async (res) => {
+            const imgData = await res.json();
+            if (imgData.imageUrl) {
+              setImageUrl(imgData.imageUrl);
+            }
+            setImageFetched(true);
+          })
+          .catch((err) => {
+            console.error("🚨 이미지 요청 에러:", err);
+            setImageFetched(true);
+            setStatusText("🛑 이미지 생성에 실패했습니다.");
+          });
 
-    // 🖼️ 이미지 프롬프트 만들기
-    const prompt = `A surreal illustration of ${keywords.join(", ")}, in the style of a Japanese manga panel`;
-    console.log("🖼️ 이미지 프롬프트:", prompt);
-
-    setStatusText("🖌 창작에 혼을 태우고 있어요...");
-    runTypingStatus();
-
-    fetch("/api/generate-image", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt }),
-    })
-      .then(async (res) => {
-        const imgData = await res.json();
-        if (imgData.imageUrl) {
-          setImageUrl(imgData.imageUrl);
-        }
-        setImageFetched(true);
-      })
-      .catch((err) => {
-        console.error("🚨 이미지 요청 에러:", err);
-        setImageFetched(true);
-        setStatusText("🛑 이미지 생성에 실패했습니다.");
-      });
-
-    // 15초 후 타임아웃 처리
-    setTimeout(() => {
-      if (!imageFetched) {
-        setImageFetched(true);
-        setStatusText("🕒 이미지 응답이 지연되고 있어요. 잠시 후 다시 확인해 주세요!");
+        setTimeout(() => {
+          if (!imageFetched) {
+            setImageFetched(true);
+            setStatusText("🕒 이미지 응답이 지연되고 있어요. 잠시 후 다시 확인해 주세요!");
+          }
+        }, 15000);
+      } catch (err) {
+        console.error("🔥 이야기 생성 실패:", err);
+        setRandomboxStoryText("이야기 생성 실패");
+        setStoryFetched(true);
       }
-    }, 15000);
+    }
 
-    setCurrent(7);
-    return;
-  } catch (err) {
-    console.error("🔥 이야기 생성 실패:", err);
-    setRandomboxStoryText("이야기 생성 실패");
-    setStoryFetched(true);
-    setCurrent(7);
-    return;
-  }
-}
     setCurrent(next);
   }
 
@@ -191,7 +179,10 @@ export default function Home() {
               style={{ maxWidth: "100%", borderRadius: "12px", marginTop: "1rem" }}
             />
           ) : (
-            <p style={{ marginTop: "1rem" }}>🖼️ 이미지를 준비하고 있어요...</p>
+            <div className="image-waiting" style={{ marginTop: "1rem", padding: "1rem", borderRadius: "8px", backgroundColor: "#f9f9f9" }}>
+              <p>🖼️ 이미지를 준비하고 있어요...</p>
+              <p style={{ fontSize: "0.9rem", color: "#666" }}>{statusText}</p>
+            </div>
           )}
         </>
       )}
@@ -207,9 +198,9 @@ export default function Home() {
       <div id="randombox-summary">
         {randomboxCurrent >= 6 && (
           <>
-            <strong>🧩 선택한 단어:</strong> {randomboxAnswers.slice(0, 5).join(", ")}<br />
-            <strong>🎬 장르:</strong> {randomboxAnswers[5]}<br />
-            <strong>🖼 스타일:</strong> {randomboxAnswers[6]}
+            <strong>🧩 표출:</strong> {randomboxAnswers.slice(0, 5).join(", ")}<br />
+            <strong>🎬 소망:</strong> {randomboxAnswers[5]}<br />
+            <strong>🖼 심연:</strong> {randomboxAnswers[6]}
           </>
         )}
       </div>
