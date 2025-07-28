@@ -1,193 +1,141 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+
+const questions = [
+  '당신이 좋아하는 색깔은?',
+  '최근에 본 인상적인 영화는?',
+  '어릴 적 꿈은 무엇이었나요?',
+  '지금 떠오르는 단어 하나를 적어보세요.',
+  '당신을 웃게 만드는 것은 무엇인가요?',
+  '무인도에 가져가고 싶은 것은?',
+  '지금 가장 하고 싶은 일은?',
+];
+
+const wordPool = [
+  '무당', '식기세척기', '하마', '콘드로이친', '가습기',
+  '고무장갑', '신호등', '해초', '냉장고', '연필깎이',
+  '구름다리', '초코송이', '두루마리', '라면봉지', '테이프',
+  '양파즙', '회전목마', '솜사탕', '사이다', '보조배터리',
+  '달고나', '쓰레받기', '호루라기', '장난감총', '달력',
+  '마사지건', '귤껍질', '전기장판', '유산균', '박하사탕',
+  '풍선껌', '젤리빈', '스케이트', '딱풀', '물티슈',
+  '드라이기', '자석', '치약', '베개', '고무줄',
+  '반창고', '커튼', '귓불', '해바라기씨', '시금치',
+  '도라에몽', '솜뭉치', '해시계', '뚝배기', '소화기'
+];
 
 export default function Home() {
-  // ✅ 단어 리스트
-  const fullChoices = [
-    "하마", "쇼핑몰", "손세정제", "가습기", "플랑크톤",
-    "마이크", "무당", "무전기", "스파게티", "사다리",
-    "경비행기", "드라이버", "모래", "우산", "식칼",
-    "한약", "거북이", "수첩", "스탬플러", "비둘기",
-    "바인더", "장마", "종이컵", "가위", "토끼",
-    "책상", "버섯", "붓", "노트북", "칫솔",
-    "샌들", "가방", "피망", "햄스터", "풍선",
-    "침대", "휴지", "식기세척기", "물컵", "개구리",
-    "버튼", "타이어휠", "요거트", "수갑", "개복치",
-    "열쇠", "리모컨", "콘드로이친", "붕대", "무좀"
-  ];
-
-  // ✅ 질문 리스트
-  const randomboxQuestions = [
-    { q: "1. 당신은 바닷가에 도착했다. 가장 먼저 눈에 들어온 것은?" },
-    { q: "2. 비 오는 날, 동료가 우산 대신 건넨 것은?" },
-    { q: "3. 식당 테이블 위에 놓여있던 것은?" },
-    { q: "4. 연극배우의 인생 배역은?" },
-    { q: "5. 불이 났을 때 당신이 가장 먼저 챙긴 것은?" },
-    { q: "6. 마우스가 고장난 날 밤, 당신이 본 영화의 장르는?", options: ["로맨스", "코믹", "액션", "스릴러", "공포"] },
-    { q: "7. 사랑하는 이가 도시락을 줬습니다. 도시락을 본 당신의 마음속 풍경은?", options: ["수채화", "리얼한 사진", "일본 애니", "미쿡 카툰", "사이버펑크"] }
-  ];
-
-  const randomboxStatuses = [
-    "기운을 긁어모으고 있습니다.",
-    "다정함 1mg, 미소 0.5mg, 배려심 0.8mg, 사악함 1t..",
-    "음, 펄펄 끓어오르기 시작했습니다.",
-    "여기에 꼰대력과 거짓말로 간을 맞춥니다.",
-    "제법 걸쭉하군요. 그럼, 붓을 적십니다.",
-    "아.. 키보드에 적신다는 걸 붓에 적셨네? 다시.. 키보드를 적십니다.",
-    "어? 뭐야? 키보드가 안되나??",
-    "마우스로 일단 출력물을 보내드리겠습니다 ㅡㅡ;;",
-    "에이, 좀, 모른 척 좀 해주세요.. 지금 몹시 부끄러우니까..",
-    "그렇다고 그냥 가시란 말은 아니고요..",
-    "그러지 말고 이리로 좀 와봐요, 네, 좀 가까이..",
-    "오란다고 진짜 왔어요? 아, 부담되네.. 아니, 잠깐만요!",
-    "아, 드디어 됐습니다! 됐어요, 됐어!",
-    "제대로 삽됐습니다!!"
-  ];
-
-  const [randomboxCurrent, setCurrent] = useState(-1);
-  const [randomboxAnswers, setAnswers] = useState<string[]>([]);
-  const [warningVisible, setWarningVisible] = useState(false);
-  const [storyFetched, setStoryFetched] = useState(false);
-  const [randomboxStoryText, setStoryText] = useState('');
+  const [randomboxCurrent, setRandomboxCurrent] = useState(-1);
+  const [selectedWords, setSelectedWords] = useState<string[]>([]);
+  const [genre, setGenre] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [imageFetched, setImageFetched] = useState(false);
   const [statusText, setStatusText] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [questionOptions, setQuestionOptions] = useState<string[][]>([]);
 
-  useEffect(() => {
-    const shuffle = [...fullChoices];
-    for (let i = shuffle.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffle[i], shuffle[j]] = [shuffle[j], shuffle[i]];
-    }
-    const sliced = Array.from({ length: 6 }, (_, i) => shuffle.slice(i * 4, (i + 1) * 4));
-    setQuestionOptions(sliced);
-  }, []);
+  const nextQuestion = () => {
+    if (randomboxCurrent < 6) {
+      setRandomboxCurrent((prev) => prev + 1);
+    } else if (randomboxCurrent === 6) {
+      const selected = Array.from(
+        document.querySelectorAll<HTMLInputElement>('input[name="randombox-word"]:checked')
+      ).map((input) => input.value);
 
-  async function nextQuestion() {
-    if (randomboxCurrent >= 0 && randomboxCurrent <= 6) {
-      const radios = document.querySelector(`input[name="q${randomboxCurrent}"]:checked`) as HTMLInputElement;
-      if (!radios) {
-        setWarningVisible(true);
-        setTimeout(() => setWarningVisible(false), 2000);
+      const genreInput = document.querySelector<HTMLInputElement>('input[name="randombox-genre"]:checked');
+
+      if (selected.length !== 5 || !genreInput) {
+        alert('단어 5개와 장르를 선택해주세요!');
         return;
       }
-      setAnswers(prev => [...prev, radios.value]);
+
+      setSelectedWords(selected);
+      setGenre(genreInput.value);
+      setRandomboxCurrent(7);
+      generateImage(selected.join(', ') + ' 장르: ' + genreInput.value);
     }
+  };
 
-    const next = randomboxCurrent + 1;
-    setCurrent(next);
-
-    if (next === 6) {
-      const keywords = [...randomboxAnswers, (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value].slice(0, 5);
-      const genre = (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value;
-
-      try {
-        const res = await fetch("/api/generate-story", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ keywords, genre }),
-        });
-        const data = await res.json();
-        setStoryText(data.story || "이야기 생성 실패");
-        setStoryFetched(true);
-      } catch (err) {
-        console.error("스토리 생성 실패:", err);
-        setStoryText("이야기 생성 실패");
-        setStoryFetched(true);
-      }
-    }
-
-    if (next === 7) {
-      const style = (document.querySelector(`input[name="q6"]:checked`) as HTMLInputElement)?.value;
-      setStatusText("🖌 창작에 혼을 태우고 있어요...");
-      await runTypingStatus();
-
-      const waitUntilStory = () => new Promise<void>(resolve => {
-        const check = () => {
-          if (storyFetched) resolve();
-          else setTimeout(check, 300);
-        };
-        check();
+  const generateImage = async (prompt: string) => {
+    try {
+      setStatusText('🖼️ 이미지를 준비하고 있어요...');
+      const res = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
       });
-      await waitUntilStory();
 
-      const fullPrompt = `${randomboxStoryText} (${style} 스타일)`;
-      try {
-        const imgRes = await fetch("/api/generate-image", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: fullPrompt }),
-        });
-        const imgData = await imgRes.json();
-        if (imgData.imageUrl) setImageUrl(imgData.imageUrl);
+      const imgData = await res.json();
+      console.log('🔥 이미지 응답 확인:', imgData);
+
+      if (imgData.imageUrl) {
+        setImageUrl(imgData.imageUrl);
         setImageFetched(true);
-      } catch (err) {
-        console.error("이미지 생성 실패:", err);
-        setImageFetched(true);
+      } else {
+        setStatusText('❌ 이미지 생성에 실패했어요!');
       }
+    } catch (e) {
+      console.error('🚨 이미지 생성 에러:', e);
+      setStatusText('❌ 이미지 생성 중 에러 발생');
     }
-  }
-
-  function wait(ms: number) {
-    return new Promise(res => setTimeout(res, ms));
-  }
-
-  async function runTypingStatus() {
-    for (let i = 0; i < randomboxStatuses.length; i++) {
-      if (imageFetched) break;
-      setStatusText(randomboxStatuses[i]);
-      await wait(1200);
-    }
-  }
-
-  const q = randomboxQuestions[randomboxCurrent];
-  const options = q?.options || questionOptions[randomboxCurrent] || [];
+  };
 
   return (
-    <div className="randombox-container">
-      {randomboxCurrent < 0 && (
-        <div className="randombox-question" style={{ textAlign: "center" }}>
-          <p>내면을 비추는 단어들이<br /><strong>당신만의 이야기가 된다면?</strong></p>
-          <p>무의식을 들추는 신묘한 이야기</p>
-          <p>즉흥적인 영감으로<br />즉석에서 바로 만들어 드립니다.</p>
-        </div>
-      )}
+    <main style={{ padding: '2rem' }}>
+      <h1>🌀 당신만의 기묘한 이야기</h1>
 
-      {randomboxCurrent >= 0 && randomboxCurrent <= 6 && (
+      {randomboxCurrent < 0 && <p>질문을 시작해볼까요?</p>}
+
+      {randomboxCurrent >= 0 && randomboxCurrent < 7 && (
         <>
-          <div className="randombox-question">{q.q}</div>
-          {options.map((opt, idx) => (
-            <label key={idx} className="randombox-option">
-              <input type="radio" name={`q${randomboxCurrent}`} value={opt} /> {opt}
-            </label>
-          ))}
+          <p>{questions[randomboxCurrent]}</p>
+          {randomboxCurrent < 6 ? (
+            <ul>
+              {Array.from({ length: 5 }, (_, i) => wordPool[Math.floor(Math.random() * wordPool.length)]).map(
+                (word) => (
+                  <li key={word}>
+                    <label>
+                      <input type="checkbox" name="randombox-word" value={word} /> {word}
+                    </label>
+                  </li>
+                )
+              )}
+            </ul>
+          ) : (
+            <div>
+              <label><input type="radio" name="randombox-genre" value="코믹" /> 코믹</label>
+              <label><input type="radio" name="randombox-genre" value="감성" /> 감성</label>
+              <label><input type="radio" name="randombox-genre" value="액션" /> 액션</label>
+            </div>
+          )}
         </>
       )}
 
       {randomboxCurrent === 7 && (
-        <>
-          <h2>🌀 당신만의 기묘한 이야기</h2>
-          <p>{randomboxStoryText}</p>
-          {imageUrl && <img src={imageUrl} style={{ maxWidth: "100%", borderRadius: "12px", marginTop: "1rem" }} />}
-        </>
+        <div style={{ marginTop: '2rem' }}>
+          <p>{statusText}</p>
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt="Generated Story Image"
+              style={{ maxWidth: '100%', borderRadius: '12px', marginTop: '1rem' }}
+            />
+          ) : (
+            <p style={{ color: '#b00' }}>❌ 이미지가 없습니다.</p>
+          )}
+          <p><strong>✅ 선택한 단어:</strong> {selectedWords.join(', ')}</p>
+          <p><strong>📖 장르:</strong> {genre}</p>
+        </div>
       )}
 
-      {warningVisible && <div id="randombox-warning">선택지를 고르세요!</div>}
-      <button id="randombox-nextBtn" onClick={nextQuestion}>
-        {randomboxCurrent < 0 ? "시작하기" : randomboxCurrent === 6 ? "마지막 질문" : randomboxCurrent === 7 ? "완료" : "다음"}
-      </button>
-
-      <div id="randombox-summary">
-        {randomboxCurrent >= 6 && (
-          <>
-            <strong>🧩 선택한 단어:</strong> {randomboxAnswers.slice(0, 5).join(", ")}<br />
-            <strong>🎬 장르:</strong> {randomboxAnswers[5]}
-          </>
-        )}
-      </div>
-      <div id="randombox-status-line">{statusText}</div>
-    </div>
+      {randomboxCurrent < 7 && (
+        <button id="randombox-nextBtn" onClick={nextQuestion}>
+          {randomboxCurrent < 0
+            ? '시작하기'
+            : randomboxCurrent === 6
+            ? '마지막 질문'
+            : '다음'}
+        </button>
+      )}
+    </main>
   );
 }
