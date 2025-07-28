@@ -249,7 +249,7 @@ export default function Home() {
       <button
   onClick={() => {
     setCurrent(-1);
-    setRandomboxAnswers([]); 
+    setAnswers([]);
     setStoryFetched(false);
     setRandomboxStoryText('');
     setImageFetched(false);
