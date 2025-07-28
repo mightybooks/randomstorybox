@@ -26,7 +26,7 @@ export default function Home() {
     { q: "7. 사랑하는 이가 도시락을 줬습니다. 도시락을 본 당신의 마음속 풍경은?", options: ["수채화", "리얼한 사진", "일본 애니", "미쿡 카툰", "사이버펑크"] }
   ];
 
-  const randomboxStatuses = [
+  const writingMessages = [
     "기운을 긁어모으고 있습니다.",
     "다정함 1mg, 미소 0.5mg, 배려심 0.8mg, 사악함 1t..",
     "음, 펄펄 끓어오르기 시작했습니다.",
@@ -41,6 +41,18 @@ export default function Home() {
     "오란다고 진짜 왔어요? 아, 부담되네.. 아니, 잠깐만요!",
     "아, 드디어 됐습니다! 됐어요, 됐어!",
     "제대로 삽됐습니다!!"
+  ];
+
+  const drawingMessages = [
+    "붓을 꺼내 들었습니다...",
+    "캔버스에 첫 획을 긋는 중...",
+    "색을 고르고 있습니다...",
+    "광원은 어디서 올까요...?",
+    "디테일을 조금 더...",
+    "살짝만 더 채색할게요...",
+    "완성이 가까워졌습니다!",
+    "마지막 터치...",
+    "이제 진짜 거의 다 왔어요...!"
   ];
 
   const [randomboxCurrent, setCurrent] = useState(-1);
@@ -72,17 +84,22 @@ export default function Home() {
     if (imageUrl && stage === 'drawing') setStage('done');
   }, [imageUrl]);
 
-  function wait(ms: number) {
-    return new Promise(res => setTimeout(res, ms));
-  }
+  useEffect(() => {
+    let active = true;
+    let index = 0;
+    const messages = stage === 'writing' ? writingMessages : drawingMessages;
 
-  async function runTypingStatus() {
-    for (let i = 0; i < randomboxStatuses.length; i++) {
-      if (imageFetched || randomboxCurrent !== 7) break;
-      setStatusText(randomboxStatuses[i]);
-      await wait(1200);
+    async function cycleMessages() {
+      while (active && stage !== 'done') {
+        setStatusText(messages[index % messages.length]);
+        await new Promise(res => setTimeout(res, 1200));
+        index++;
+      }
     }
-  }
+
+    cycleMessages();
+    return () => { active = false; };
+  }, [stage]);
 
   async function nextQuestion() {
     if (randomboxCurrent >= 0 && randomboxCurrent <= 6) {
@@ -115,7 +132,6 @@ export default function Home() {
 
           const style = randomboxAnswers[6];
           const prompt = `A surreal illustration of ${keywords.join(", ")}, in the style of ${style}`;
-          runTypingStatus();
 
           fetch("/api/generate-image", {
             method: "POST",
@@ -180,10 +196,10 @@ export default function Home() {
       {randomboxCurrent === 7 && (
         <div className="randombox-question">
           <h2 className="text-xl font-bold mb-2">🖌️ 그림 스타일 선택 완료!</h2>
-          {stage === 'writing' && <><p>✍️ 지금 당신만의 이야기를 쓰는 중입니다...</p><p className="text-sm text-gray-500">(이야기가 완성되면 AI 그림이 자동으로 생성됩니다)</p></>}
-          {stage === 'drawing' && <><p>🖼️ 이야기가 완성되었습니다!</p><p className="text-sm text-gray-500">이제 AI가 그림을 그리고 있어요...</p></>}
+          {stage === 'writing' && <><p>✍️ 지금 당신만의 이야기를 쓰는 중입니다...</p></>}
+          {stage === 'drawing' && <><p>🖼️ 이야기가 완성되었습니다! 이제 그림을 그리는 중이에요...</p></>}
           {stage === 'done' && <><p>🎉 모든 생성이 완료되었습니다!</p><p>이제 이야기와 그림이 아래에 표시됩니다.</p></>}
-          <div id="randombox-status-line">{statusText}</div>
+          <p>{statusText}</p>
           <div id="randombox-summary">
             <strong>🧩 표출:</strong> {randomboxAnswers.slice(0, 5).join(", ")}<br />
             <strong>🎬 소망:</strong> {randomboxAnswers[5]}<br />
