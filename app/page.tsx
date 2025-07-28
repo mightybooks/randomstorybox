@@ -114,41 +114,49 @@ export default function Home() {
     }
 
     if (next === 7) {
-      setTimeout(async () => {
-        const style = (document.querySelector(`input[name="q6"]:checked`) as HTMLInputElement)?.value;
-        setStatusText("🖌 창작에 혼을 태우고 있어요...");
-        await runTypingStatus();
+  console.log("🎯 이미지 요청 시작 준비됨");
+  
+  setTimeout(async () => {
+    console.log("🔔 이미지 요청 시작됨");
 
-        const waitUntilStory = () =>
-          new Promise<void>(resolve => {
-            const check = () => {
-              if (storyFetched) resolve();
-              else setTimeout(check, 300);
-            };
-            check();
-          });
+    const style = (document.querySelector(`input[name="q6"]:checked`) as HTMLInputElement)?.value;
+    setStatusText("🖌 창작에 혼을 태우고 있어요...");
 
-        await waitUntilStory();
+    await runTypingStatus();
 
-        const fullPrompt = `${randomboxStoryText} (${style} 스타일)`;
+    const waitUntilStory = () =>
+      new Promise<void>(resolve => {
+        const check = () => {
+          if (storyFetched) resolve();
+          else setTimeout(check, 300);
+        };
+        check();
+      });
 
-        try {
-          const imgRes = await fetch("/api/generate-image", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt: fullPrompt }),
-          });
-          const imgData = await imgRes.json();
-          if (imgData.imageUrl) {
-            setImageUrl(imgData.imageUrl);
-          }
-          setImageFetched(true);
-        } catch (err) {
-          console.error("이미지 생성 실패:", err);
-          setImageFetched(true);
-        }
-      }, 100);
+    await waitUntilStory();
+
+    console.log("📦 이미지 프롬프트 생성:", randomboxStoryText);
+
+    const fullPrompt = `${randomboxStoryText} (${style} 스타일)`;
+
+    try {
+      const imgRes = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: fullPrompt }),
+      });
+      const imgData = await imgRes.json();
+      if (imgData.imageUrl) {
+        console.log("✅ 이미지 URL 설정됨:", imgData.imageUrl);
+        setImageUrl(imgData.imageUrl);
+      }
+      setImageFetched(true);
+    } catch (err) {
+      console.error("이미지 생성 실패:", err);
+      setImageFetched(true);
     }
+  }, 100);
+}
   }
 
   const q = randomboxQuestions[randomboxCurrent];
