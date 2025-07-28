@@ -239,13 +239,13 @@ return (
         {/* 🔗 공유하기 섹션 */}
         <div className="randombox-share" style={{ marginTop: "2rem" }}>
           <h3 className="text-lg font-semibold">🔗 공유하기</h3>
-          <div className="flex flex-col gap-2 mt-2">
+          <div className="flex flex-wrap gap-3 mt-2">
            <button
               onClick={() => {
               const baseUrl = "https://randomstorybox.vercel.app";
               navigator.clipboard.writeText(baseUrl);
                 alert("✅ 사이트 주소가 복사되었습니다! 친구에게 보내보세요.");
-              }}
+              }} className="randombox-share-button"
             >
               🧪 랜덤서사박스 새로 해보기 링크 공유
             </button>
@@ -257,7 +257,7 @@ return (
         navigator.clipboard.writeText(shareText);
         alert("✅ 이야기와 링크가 복사되었습니다! SNS나 메신저에 붙여보세요.");
           }}
-            >
+            className="randombox-share-button">
               🌈 내 이야기 결과물 공유
             </button>
           </div>
@@ -272,7 +272,7 @@ return (
               setImageUrl('');
               setStage('writing');
             }}
-          >
+          className="randombox-share-button">
             🔄 다시 해보기
           </button>
         </div>
