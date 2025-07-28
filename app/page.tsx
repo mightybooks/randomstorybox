@@ -89,9 +89,7 @@ export default function Home() {
     const next = randomboxCurrent + 1;
     setCurrent(next);
 
-    if (randomboxCurrent === 6) {
-      console.log("🔥 현재 randomboxCurrent 값:", randomboxCurrent);
-
+    if (next === 6) {
       const keywords = [...randomboxAnswers, (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value].slice(0, 5);
       const genre = (document.querySelector(`input[name="q5"]:checked`) as HTMLInputElement)?.value;
 
@@ -102,55 +100,54 @@ export default function Home() {
           body: JSON.stringify({ keywords, genre }),
         });
         const data = await res.json();
-
-        console.log("📦 OpenAI 응답 전체:", data);
-
         setRandomboxStoryText(data.story || "이야기 생성 실패");
         setStoryFetched(true);
 
-        // ✅ 자동으로 7단계 진입
+        // 자동 7단계 진입
         setCurrent(7);
       } catch (err) {
         console.error("스토리 생성 실패:", err);
         setRandomboxStoryText("이야기 생성 실패");
         setStoryFetched(true);
+        setCurrent(7); // 실패해도 진입
       }
     }
 
     if (next === 7) {
-      const style = (document.querySelector(`input[name="q6"]:checked`) as HTMLInputElement)?.value;
-      setStatusText("🖌 창작에 혼을 태우고 있어요...");
+      setTimeout(async () => {
+        const style = (document.querySelector(`input[name="q6"]:checked`) as HTMLInputElement)?.value;
+        setStatusText("🖌 창작에 혼을 태우고 있어요...");
+        await runTypingStatus();
 
-      await runTypingStatus();
+        const waitUntilStory = () =>
+          new Promise<void>(resolve => {
+            const check = () => {
+              if (storyFetched) resolve();
+              else setTimeout(check, 300);
+            };
+            check();
+          });
 
-      const waitUntilStory = () =>
-        new Promise<void>(resolve => {
-          const check = () => {
-            if (storyFetched) resolve();
-            else setTimeout(check, 300);
-          };
-          check();
-        });
+        await waitUntilStory();
 
-      await waitUntilStory();
+        const fullPrompt = `${randomboxStoryText} (${style} 스타일)`;
 
-      const fullPrompt = `${randomboxStoryText} (${style} 스타일)`;
-
-      try {
-        const imgRes = await fetch("/api/generate-image", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: fullPrompt }),
-        });
-        const imgData = await imgRes.json();
-        if (imgData.imageUrl) {
-          setImageUrl(imgData.imageUrl);
+        try {
+          const imgRes = await fetch("/api/generate-image", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: fullPrompt }),
+          });
+          const imgData = await imgRes.json();
+          if (imgData.imageUrl) {
+            setImageUrl(imgData.imageUrl);
+          }
+          setImageFetched(true);
+        } catch (err) {
+          console.error("이미지 생성 실패:", err);
+          setImageFetched(true);
         }
-        setImageFetched(true);
-      } catch (err) {
-        console.error("이미지 생성 실패:", err);
-        setImageFetched(true);
-      }
+      }, 100);
     }
   }
 
