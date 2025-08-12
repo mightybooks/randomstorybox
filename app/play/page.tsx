@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { buildPrompt } from "@/prompts"; // ← 방금 만든 prompts.ts에서 import
+import { buildPrompt } from "../../lib/prompts"; // ← 방금 만든 prompts.ts에서 import
 
 type Phase = "idle" | "asking" | "writing" | "done";
 
