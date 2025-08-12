@@ -1,7 +1,5 @@
 // ===== app/globals.css (전체 교체본) =====
 
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap');
-
 /* ── Theme (공통 변수) ───────────────────────────────────────────── */
 :root{
   --bg:#faf7f3;          /* 페이지 배경 */
