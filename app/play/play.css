@@ -58,9 +58,12 @@
 .rsb-option:hover { border-color: #d7cbbf; }
 .rsb-option input { display: none; }
 .rsb-option.active {
-  border-color: #cbb69e;
+  background-color: #fff5d6; /* 부드러운 연노랑 배경 */
+  border-color: #d9a441; /* 더 진한 금색 테두리 */
+  color: #5a3e0b; /* 글씨 색도 어두운 갈색으로 */
   box-shadow: 0 6px 16px rgba(203,182,158,.25);
   transform: translateY(-1px);
+  font-weight: bold; /* 글자 굵게 */
 }
 
 /* 알림 */
