@@ -25,27 +25,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Page() {
+export default function Landing() {
   return (
-// main에 레이아웃 책임 부여
-    <main className="min-h-screen bg-gradient-to-b from-white to-slate-50 flex flex-col">
-  {/* 가운데 영역 */}
-      <section className="flex-1 mx-auto max-w-3xl px-6 flex flex-col items-center justify-center text-center">
-        {/* 헤드라인 */}
-        <h1 className="text-3xl sm:text-4xl font-bold">
-          문수림의 랜덤서사박스
-        </h1>
-        <p className="mt-2 text-lg text-gray-600">
-          희노애락과 병맛이 함께 하는 이야기 박스
-        </p>
+    <main className="landing">
+      <section className="landing-card">
+        <h1 className="landing-title">문수림의 랜덤서사박스</h1>
+        <p className="landing-sub">희노애락과 병맛이 함께 하는 이야기 박스</p>
 
-        {/* 서브카피 */}
-        <p className="mt-4 text-gray-700">
+        <p className="mt-4 landing-body">
           몇 가지 질문으로 당신만의 짧은 이야기를 생성해 드립니다.
         </p>
 
-        {/* 소개글 */}
-        <div className="mt-8 text-left text-gray-700 leading-relaxed">
+        <div className="mt-8 landing-body text-left">
           <p>
             안녕하세요, 소설가이자 출판사업가로 수림스튜디오를 운영중인 문수림입니다.<br/>
             이번에 제가 개발한 랜덤서사박스는 GPT-5모델을 활용한 바이브코딩으로<br/>
@@ -77,21 +68,13 @@ export default function Page() {
           </p>
         </div>
 
-        {/* 시작 버튼 */}
         <div className="mt-8">
-          <Link
-    href="/play"
-    className="inline-flex items-center justify-center no-underline rounded-2xl bg-black px-6 py-3 text-white font-medium shadow-sm hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/30 active:opacity-80 transition"
-  >
-    시작하기
-  </Link>
+          <Link href="/play" className="btn primary">시작하기</Link>
         </div>
       </section>
 
-      {/* 푸터는 바닥 고정 느낌 */}
-      {/* 저작권 */}
-      <footer className="mt-12 py-6 text-center text-gray-500 text-sm border-t">
-        &copy; {new Date().getFullYear()} surim studio, 문수림.
+      <footer className="landing-footer">
+        © {new Date().getFullYear()} surim studio, 문수림.
       </footer>
     </main>
   );
