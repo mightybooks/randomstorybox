@@ -60,17 +60,54 @@ function buildSessionQuestions(): QItem[] {
 // ----------------------
 // 4) 공유 유틸
 // ----------------------
-async function shareText(text: string) {
+async function copyFallback(text: string) {
   try {
-    if (navigator.share) {
-      await navigator.share({ title: "랜덤서사박스", text });
-    } else {
-      await navigator.clipboard.writeText(text);
-      alert("결과가 복사되었습니다.");
-    }
+    // HTTPS + 권한 OK인 브라우저에서는 표준 API
+    await navigator.clipboard.writeText(text);
+    return true;
   } catch {
-    // 사용자 취소 등은 무시
+    // 폴백: 임시 textarea 만들어 선택→복사
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    ta.setAttribute("readonly", "");
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand("copy"); // 일부 브라우저에서 여전히 동작
+    document.body.removeChild(ta);
+    return ok;
   }
+}
+
+async function shareText(text: string) {
+  const url =
+    typeof window !== "undefined" ? window.location.href : undefined;
+
+  // 1) 먼저 클립보드에 넣어두기 (일부 앱이 text를 무시해도 사용자가 붙여넣기 가능)
+  try {
+   await copyFallback(url ? `${text}\n${url}` : text);
+  } catch {
+    // HTTPS/권한 이슈로 실패할 수 있음 → 무시(공유는 계속 시도)
+  }
+
+  // 2) Web Share 지원 시 text+url 동시 전달
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: "랜덤서사박스 결과",
+        text: text.length > 400 ? text.slice(0, 400) + "…" : text, // 너무 길면 잘릴 수 있어 미리 줄임
+        url, // 일부 대상은 url이 있어야 텍스트도 붙습니다
+      });
+      return;
+    } catch {
+      // 사용자가 취소했거나 공유 실패 → 아래 알림으로 안내
+    }
+  }
+
+  // 3) Web Share 미지원/실패 시 복사 안내
+  alert("결과를 클립보드에 복사했습니다. 원하는 곳에 붙여넣기 하세요.");
 }
 
 async function shareApp(origin?: string) {
@@ -79,7 +116,7 @@ async function shareApp(origin?: string) {
     if (navigator.share) {
       await navigator.share({ title: "랜덤서사박스", url });
     } else {
-      await navigator.clipboard.writeText(url);
+      await copyFallback(url); // ← 여기서 fallback 사용
       alert("앱 주소가 복사되었습니다.");
     }
   } catch {}
