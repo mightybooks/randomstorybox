@@ -27,8 +27,10 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <main className="min-h-screen bg-white">
-      <section className="mx-auto max-w-3xl px-6 pt-20 pb-12 text-center">
+// main에 레이아웃 책임 부여
+    <main className="min-h-screen bg-gradient-to-b from-white to-slate-50 flex flex-col">
+  {/* 가운데 영역 */}
+      <section className="flex-1 mx-auto max-w-3xl px-6 flex flex-col items-center justify-center text-center">
         {/* 헤드라인 */}
         <h1 className="text-3xl sm:text-4xl font-bold">
           문수림의 랜덤서사박스
@@ -45,30 +47,32 @@ export default function Page() {
         {/* 소개글 */}
         <div className="mt-8 text-left text-gray-700 leading-relaxed">
           <p>
-            안녕하세요, 소설가이자 출판사업가로 수림스튜디오를 운영중인 문수림입니다.
-            이번에 제가 개발한 랜덤서사박스는 GPT-5모델을 활용한 바이브코딩으로
+            안녕하세요, 소설가이자 출판사업가로 수림스튜디오를 운영중인 문수림입니다.<br/>
+            이번에 제가 개발한 랜덤서사박스는 GPT-5모델을 활용한 바이브코딩으로<br/>
             웹개발을 하고, GPT-4o API로 이야기를 생성하는 앱입니다.
           </p>
           <p className="mt-4">
-            누구나 AI와 직접 대화를 하고 이야기를 생성할 수는 있지만,
-            자신을 드러내기 위해 평소에 전혀 생각해본 적 없는 소재로 글을
-            써보는 경우는 극히 드물죠.
+            누구나 AI와 직접 대화를 하고 이야기를 생성할 수는 있지만,<br/>
+            자신을 드러내기 위해<br/>
+            평소에 전혀 생각해본 적 없는 소재로<br/> 
+            글을 써보는 경우는 극히 드물죠.
           </p>
           <p className="mt-4">
-            문수림의 랜덤서사박스는 기존의 심리테스트 앱과는 달리 사용자가 직접
-            선택한 단어를 기반으로 매번 새롭게 이야기를 창조해내는
-            인터렉티브 글쓰기 생성 앱입니다.
+            문수림의 랜덤서사박스는 기존의 심리테스트 앱과는 달리<br/>
+            사용자가 직접 선택한 단어를 기반으로<br/>
+            매번 새롭게 이야기를 창조해내는 인터렉티브 글쓰기 생성 앱입니다.
           </p>
           <p className="mt-4">
-            정해진 단어와 패턴이라고는 해도 약 xx,xxx의 경우의 수로 탄생하는
-            이야기라 사실상 당신만을 위한 이야기라 할 수 있겠습니다.
+            정해진 단어와 패턴이라고는 해도<br/>
+            약 xx,xxx의 경우의 수로 탄생하는 이야기라<br/>
+            사실상 당신만을 위한 이야기라 할 수 있겠습니다.
           </p>
           <p className="mt-4">
             그럼, 마음껏 즐겨보시길 바랍니다.
             <br />
-            (단, 팍팍한 사업비 덕에 동일IP로는 1일 2회만 이야기 생성이
-            가능합니다. 이야기 생성 결과물은 어디까지나 랜덤이며, 운입니다.
-            회노애락이 절절한 글일 수도 있고, 병맛소설일 수도 있습니다.
+            (단, 팍팍한 사업비 덕에 동일IP로는 1일 2회만 이야기 생성이 가능합니다.<br/>
+            이야기 생성 결과물은 어디까지나 랜덤이며, 운입니다.<br/>
+            회노애락이 절절한 글일 수도 있고, 병맛소설일 수도 있습니다.<br/>
             모두 다 어디까지나 즐거운 농담임을 잊지 마세요.)
           </p>
         </div>
@@ -76,14 +80,15 @@ export default function Page() {
         {/* 시작 버튼 */}
         <div className="mt-8">
           <Link
-            href="/play"
-            className="rounded-xl bg-black px-6 py-3 text-white hover:bg-gray-800"
-          >
-            시작하기
-          </Link>
+    href="/play"
+    className="inline-flex items-center justify-center no-underline rounded-2xl bg-black px-6 py-3 text-white font-medium shadow-sm hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/30 active:opacity-80 transition"
+  >
+    시작하기
+  </Link>
         </div>
       </section>
 
+      {/* 푸터는 바닥 고정 느낌 */}
       {/* 저작권 */}
       <footer className="mt-12 py-6 text-center text-gray-500 text-sm border-t">
         &copy; {new Date().getFullYear()} surim studio, 문수림.
