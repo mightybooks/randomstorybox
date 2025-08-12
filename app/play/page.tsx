@@ -2,40 +2,20 @@
 
 import { useMemo, useState, useEffect } from 'react'
 
-// ✅ 새 질문 5개 샘플 (원본 데이터로 손쉽게 교체 가능)
-const QUESTIONS = [
-  {
-    id: 1,
-    text: '당신은 무엇으로 환생하고 싶나요?',
-    options: ['고양이', '바람', '돌멩이', '지하철 안내방송'],
-  },
-  {
-    id: 2,
-    text: '평소 무엇이 가장 불편한가요?',
-    options: ['줄 서기', '소음', '예의 없는 말투', '춥고 건조한 공기'],
-  },
-  {
-    id: 3,
-    text: '조금이라도 안정감을 느끼는 장소는?',
-    options: ['편의점 진열대 사이', '지하 주차장', '옥상 모서리', '세탁소 스팀 옆'],
-  },
-  {
-    id: 4,
-    text: '법관이라면 어떤 주제의 법을 만들까요?',
-    options: ['퇴근보장법', '소음 선제 차단법', '말 과장 금지법', '건조주의보 유급휴가법'],
-  },
-  {
-    id: 5,
-    text: '당신이 정말 용납하기 힘든 것은?',
-    options: ['감정 과장', '약속 파기', '씹던 껌 붙이기', '끝말잇기 편법'],
-  },
-]
-
 type Phase = 'idle' | 'asking' | 'writing' | 'drawing' | 'done'
 
-export default function Home() {
+// ✅ 질문 5개 샘플 (나중에 실제 데이터로 교체 가능)
+const QUESTIONS = [
+  { id: 1, text: '당신은 무엇으로 환생하고 싶나요?', options: ['고양이', '바람', '돌멩이', '지하철 안내방송'] },
+  { id: 2, text: '평소 무엇이 가장 불편한가요?', options: ['줄 서기', '소음', '예의 없는 말투', '춥고 건조한 공기'] },
+  { id: 3, text: '조금이라도 안정감을 느끼는 장소는?', options: ['편의점 진열대 사이', '지하 주차장', '옥상 모서리', '세탁소 스팀 옆'] },
+  { id: 4, text: '법관이라면 어떤 주제의 법을 만들까요?', options: ['퇴근보장법', '소음 선제 차단법', '말 과장 금지법', '건조주의보 유급휴가법'] },
+  { id: 5, text: '당신이 정말 용납하기 힘든 것은?', options: ['감정 과장', '약속 파기', '씹던 껌 붙이기', '끝말잇기 편법'] },
+]
+
+export default function PlayPage(){
   const [phase, setPhase] = useState<Phase>('idle')
-  const [step, setStep] = useState(0) // 0~4 index for QUESTIONS
+  const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState<string[]>(Array(QUESTIONS.length).fill(''))
   const [notice, setNotice] = useState('')
   const [story, setStory] = useState('')
@@ -60,38 +40,39 @@ export default function Home() {
   }
 
   const nextStep = () => {
-    if (!answers[step]) {
-      setNotice('선택지를 골라주세요.')
-      return
-    }
-    if (step < QUESTIONS.length - 1) {
-      setStep(step + 1)
-      return
-    }
-    // 마지막 질문을 마치면 글 생성 → 이미지 생성 순으로 진행
+    if (!answers[step]) { setNotice('선택지를 골라주세요.'); return }
+
+    if (step < QUESTIONS.length - 1) { setStep(step + 1); return }
+
+    // 마지막 질문 완료 → 글 생성 → 이미지 생성
     setPhase('writing')
     setNotice('이야기를 정리하는 중… (writing)')
 
-    // 🔧 여기에서 실제 story API 호출
-    // fetch('/api/generate-story', { method: 'POST', body: JSON.stringify({ answers }) })
+    // 🔧 실제 스토리 API 연결 위치
+    // fetch('/api/generate-story', {
+    //   method: 'POST', headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ answers })
+    // })
     //   .then(r => r.json())
-    //   .then(data => { setStory(data.story); setPhase('drawing') })
-    //   .catch(() => { setStory('생성 실패… 다시 시도해 주세요.'); setPhase('done') })
+    //   .then(data => { setStory(data.story); setPhase('drawing'); setNotice('그림을 그리고 있어요… (drawing)') })
+    //   .catch(() => { setStory('생성 실패… 다시 시도해 주세요.'); setPhase('done'); setNotice('') })
 
-    // Demo: 가짜 지연으로 흐름만 재현
+    // 데모용: 흐름만 재현
     setTimeout(() => {
       const stub = makeStubStory(answers)
       setStory(stub)
       setPhase('drawing')
       setNotice('그림을 그리고 있어요… (drawing)')
 
-      // 🔧 여기에서 실제 이미지 생성 API 호출
-      // fetch('/api/generate-image', { method: 'POST', body: JSON.stringify({ story }) })
+      // 🔧 실제 이미지 생성 API 연결 위치
+      // fetch('/api/generate-image', {
+      //   method: 'POST', headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ story: stub })
+      // })
       //   .then(r => r.json())
-      //   .then(data => { setImageUrl(data.url) })
+      //   .then(data => setImageUrl(data.url))
 
       setTimeout(() => {
-        // 랜덤 플레이스홀더 (교체 예정)
         const rnd = Math.floor(Math.random() * 10000)
         setImageUrl(`https://picsum.photos/seed/${rnd}/1200/720`)
       }, 900)
@@ -108,7 +89,7 @@ export default function Home() {
   }, [imageUrl])
 
   return (
-    <main className="wrap">
+    <main className="app rsb">
       <div className="card">
         <header className="header">
           <h1 className="title">문수림의 랜덤서사박스</h1>
@@ -122,7 +103,7 @@ export default function Home() {
         )}
 
         {phase === 'asking' && (
-          <section className="ask">
+          <section>
             <div className="qhead">
               <span className="qno">Q{step + 1}</span>
               <span className="qtext">{currentQ.text}</span>
@@ -167,7 +148,7 @@ export default function Home() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={imageUrl} alt="생성 이미지" />
               ) : (
-                <div className="img-skeleton">이미지 생성 중…</div>
+                <div className="center" style={{color:'#8a7d70'}}>이미지 생성 중…</div>
               )}
             </div>
 
@@ -178,7 +159,7 @@ export default function Home() {
                   <p key={i}>{line}</p>
                 ))
               ) : (
-                <p className="typing">이야기를 정리하는 중…</p>
+                <p style={{color:'#6d5c4c'}}>이야기를 정리하는 중…</p>
               )}
             </article>
 
@@ -197,8 +178,7 @@ export default function Home() {
   )
 }
 
-// ─────────────────────────────────────────────────────
-// 데모용 스텁 스토리 (실제 프롬프트-응답으로 교체)
+// ── 데모 스토리 (실제 프롬프트-응답으로 교체용) ───────────────────
 function makeStubStory(a: string[]) {
   const [w1, w2, w3, w4, w5] = a
   return [
