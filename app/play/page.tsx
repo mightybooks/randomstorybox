@@ -1,10 +1,9 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 
-type Phase = "idle" | "asking" | "writing" | "drawing" | "done";
+type Phase = "idle" | "asking" | "writing" | "done";
 
-// ✅ 질문 (보기 텍스트와 styleMap 키가 정확히 일치해야 합니다)
 const QUESTIONS = [
   { id: 1, text: "당신은 무엇으로 환생하고 싶나요?", options: ["고양이", "바람", "돌멩이", "지하철 안내방송"] },
   { id: 2, text: "평소 무엇이 가장 불편한가요?", options: ["웨이팅", "소음", "반말", "더운 날씨"] },
@@ -21,7 +20,6 @@ export default function PlayPage() {
   const [answers, setAnswers] = useState<string[]>(Array(QUESTIONS.length).fill(""));
   const [notice, setNotice] = useState("");
   const [story, setStory] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
 
   const currentQ = useMemo(() => QUESTIONS[step], [step]);
 
@@ -30,7 +28,6 @@ export default function PlayPage() {
     setStep(0);
     setAnswers(Array(QUESTIONS.length).fill(""));
     setStory("");
-    setImageUrl("");
     setNotice("");
   };
 
@@ -41,7 +38,6 @@ export default function PlayPage() {
     setNotice("");
   };
 
-  // 7번 질문 → style 매핑 (보기 텍스트와 100% 동일해야 함)
   const styleMap: Record<string, string> = {
     "무라카미 소라치의 진혼": "byungmat",
     "문수림의 20에서 30까지": "msr",
@@ -62,10 +58,10 @@ export default function PlayPage() {
 
     // 마지막 질문 완료 → 글 생성
     setPhase("writing");
-    setNotice("이야기를 정리하는 중… (writing)");
+    setNotice("이야기를 정리하는 중…");
 
-    const words = answers.slice(0, 5); // Q1~Q5
-    const style = styleMap[answers[6]]; // Q7
+    const words = answers.slice(0, 5);
+    const style = styleMap[answers[6]];
 
     if (!style) {
       setStory("스타일 매핑에 실패했습니다. Q7 보기 텍스트를 확인해 주세요.");
@@ -83,14 +79,8 @@ export default function PlayPage() {
       .then((data) => {
         if (data.result) {
           setStory(data.result);
-          setPhase("drawing");
-          setNotice("그림을 그리고 있어요… (drawing)");
-
-          // 데모용 이미지 (원하면 이미지 API로 교체)
-          setTimeout(() => {
-            const rnd = Math.floor(Math.random() * 10000);
-            setImageUrl(`https://picsum.photos/seed/${rnd}/1200/720`);
-          }, 900);
+          setPhase("done");
+          setNotice("");
         } else {
           setStory("생성 실패… 다시 시도해 주세요.");
           setPhase("done");
@@ -103,15 +93,6 @@ export default function PlayPage() {
         setNotice("");
       });
   };
-
-  // 이미지 로드 완료되면 done
-  useEffect(() => {
-    if (!imageUrl) return;
-    const img = new Image();
-    img.src = imageUrl;
-    img.onload = () => setPhase("done");
-    img.onerror = () => setPhase("done");
-  }, [imageUrl]);
 
   return (
     <main className="app rsb">
@@ -167,21 +148,8 @@ export default function PlayPage() {
           </section>
         )}
 
-        {(phase === "writing" || phase === "drawing" || phase === "done") && (
+        {(phase === "writing" || phase === "done") && (
           <section className="result">
-            {/* 이미지 상단 */}
-            <div className="imgbox">
-              {imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={imageUrl} alt="생성 이미지" />
-              ) : (
-                <div className="center" style={{ color: "#8a7d70" }}>
-                  이미지 생성 중…
-                </div>
-              )}
-            </div>
-
-            {/* 글 하단 */}
             <article className="story">
               {story ? (
                 story.split("\n").map((line, i) => <p key={i}>{line}</p>)
@@ -190,14 +158,9 @@ export default function PlayPage() {
               )}
             </article>
 
-            {/* 상태 라벨 */}
-            {phase !== "done" && <p className="status">{notice}</p>}
-
             {phase === "done" && (
               <div className="actions center">
-                <button className="btn" onClick={start}>
-                  다시 만들기
-                </button>
+                <button className="btn" onClick={start}>다시 만들기</button>
               </div>
             )}
           </section>
