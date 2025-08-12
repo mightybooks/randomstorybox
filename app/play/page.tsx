@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { buildPrompt } from "../../lib/prompts"; // ← 방금 만든 prompts.ts에서 import
+import { useRouter } from "next/navigation";
+import { buildPrompt } from "../../lib/prompts"; // 경로는 프로젝트 구조에 맞게 조정
+import "./play.css";
 
 type Phase = "idle" | "asking" | "writing" | "done";
 
@@ -31,7 +33,7 @@ const POOL_Q7: QOption[] = [
 // 2) 유틸: 풀에서 N개 랜덤 샘플
 // ----------------------
 function sampleN<T>(arr: T[], n: number): T[] {
-  if (n >= arr.length) return [...arr];
+  if (arr.length <= n) return [...arr];
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
     const j = (Math.random() * (i + 1)) | 0;
@@ -55,7 +57,37 @@ function buildSessionQuestions(): QItem[] {
   ];
 }
 
+// ----------------------
+// 4) 공유 유틸
+// ----------------------
+async function shareText(text: string) {
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: "랜덤서사박스", text });
+    } else {
+      await navigator.clipboard.writeText(text);
+      alert("결과가 복사되었습니다.");
+    }
+  } catch {
+    // 사용자 취소 등은 무시
+  }
+}
+
+async function shareApp(origin?: string) {
+  const url = origin ? `${origin}/` : "/";
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: "랜덤서사박스", url });
+    } else {
+      await navigator.clipboard.writeText(url);
+      alert("앱 주소가 복사되었습니다.");
+    }
+  } catch {}
+}
+
 export default function PlayPage() {
+  const router = useRouter();
+
   const [phase, setPhase] = useState<Phase>("idle");
   const [step, setStep] = useState(0);
 
@@ -73,6 +105,8 @@ export default function PlayPage() {
     setAnswers(Array(newQs.length).fill(""));
     setStory("");
     setNotice("");
+    // 맨 위로
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const currentQ = sessionQs[step];
@@ -105,7 +139,7 @@ export default function PlayPage() {
     fetch("/api/generate-story", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      // 백엔드가 예전 형식을 기대해도 깨지지 않도록 모두 전송
+      // 호환을 위해 prompt + style + words 모두 전송
       body: JSON.stringify({ prompt: promptText, style, words }),
     })
       .then((r) => r.json())
@@ -126,16 +160,16 @@ export default function PlayPage() {
   };
 
   return (
-    <main className="app rsb">
-      <div className="card">
-        <header className="header">
-          <h1 className="title">문수림의 랜덤서사박스</h1>
-          <p className="subtitle">진지한데 엉뚱한 단편 서사 생성기</p>
+    <main className="rsb-app">
+      <div className="rsb-card">
+        <header className="rsb-header">
+          <h1 className="rsb-title">문수림의 랜덤서사박스</h1>
+          <p className="rsb-subtitle">진지한데 엉뚱한 단편 서사 생성기</p>
         </header>
 
         {phase === "idle" && (
-          <div className="center">
-            <button className="btn primary" onClick={start}>
+          <div className="rsb-center">
+            <button className="rsb-btn rsb-primary" onClick={start}>
               시작하기
             </button>
           </div>
@@ -143,14 +177,14 @@ export default function PlayPage() {
 
         {phase === "asking" && currentQ && (
           <section>
-            <div className="qhead">
-              <span className="qno">Q{step + 1}</span>
-              <span className="qtext">{currentQ.text}</span>
+            <div className="rsb-qhead">
+              <span className="rsb-qno">Q{step + 1}</span>
+              <span className="rsb-qtext">{currentQ.text}</span>
             </div>
 
-            <div className="options">
+            <div className="rsb-options">
               {currentQ.options.map((opt) => (
-                <label key={opt.label} className={`option ${answers[step] === opt.value ? "active" : ""}`}>
+                <label key={opt.label} className={`rsb-option ${answers[step] === opt.value ? "active" : ""}`}>
                   <input
                     type="radio"
                     name={`q${currentQ.id}`}
@@ -162,38 +196,45 @@ export default function PlayPage() {
               ))}
             </div>
 
-            {notice && <p className="notice">{notice}</p>}
+            {notice && <p className="rsb-notice">{notice}</p>}
 
-            <div className="actions">
-              <button className="btn" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>
+            <div className="rsb-actions">
+              <button className="rsb-btn" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>
                 이전
               </button>
-              <button className="btn primary" onClick={nextStep}>
+              <button className="rsb-btn rsb-primary" onClick={nextStep}>
                 {step === sessionQs.length - 1 ? "완료" : "다음"}
               </button>
             </div>
 
-            <div className="progress">
+            <div className="rsb-progress">
               <div
-                className="bar"
-                style={{
-                  width: `${sessionQs.length ? ((step + 1) / sessionQs.length) * 100 : 0}%`,
-                }}
+                className="rsb-bar"
+                style={{ width: `${sessionQs.length ? ((step + 1) / sessionQs.length) * 100 : 0}%` }}
               />
             </div>
           </section>
         )}
 
         {(phase === "writing" || phase === "done") && (
-          <section className="result">
-            <article className="story">
-              {story ? story.split("\n").map((line, i) => <p key={i}>{line}</p>) : <p style={{ color: "#6d5c4c" }}>이야기를 정리하는 중…</p>}
+          <section className="rsb-result">
+            <article className="rsb-story">
+              {story ? story.split("\n").map((line, i) => <p key={i}>{line}</p>) : <p className="rsb-wip">이야기를 정리하는 중…</p>}
             </article>
 
             {phase === "done" && (
-              <div className="actions center">
-                <button className="btn" onClick={start}>
-                  다시 만들기
+              <div className="rsb-actions rsb-actions-grid">
+                <button className="rsb-btn" onClick={() => router.push("/")}>
+                  홈으로
+                </button>
+                <button className="rsb-btn" onClick={start}>
+                  다시하기
+                </button>
+                <button className="rsb-btn" onClick={() => shareText(story)}>
+                  결과 공유
+                </button>
+                <button className="rsb-btn" onClick={() => shareApp(typeof window !== "undefined" ? window.location.origin : undefined)}>
+                  앱 공유
                 </button>
               </div>
             )}
