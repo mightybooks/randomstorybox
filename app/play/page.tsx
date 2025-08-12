@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { buildPrompt } from "@/prompts"; // ← 방금 만든 prompts.ts에서 import
 
 type Phase = "idle" | "asking" | "writing" | "done";
 
@@ -8,7 +9,7 @@ type QOption = { label: string; value: string };
 type QItem = { id: number; text: string; options: QOption[] };
 
 // ----------------------
-// 1) 질문별 대규모 단어 풀 (원하는 만큼 늘려도 됨)
+// 1) 질문별 대규모 단어 풀
 // ----------------------
 const POOLS = {
   q1: ["고양이", "바람", "돌멩이", "지하철 안내방송", "비둘기", "변기", "군화", "낙엽", "미나리", "신호등", "우산", "맘모스", "분리수거 라벨", "골목 자판기", "텀블러", "귤껍질"],
@@ -18,7 +19,7 @@ const POOLS = {
   q5: ["약속 파기", "무단횡단", "쓰레기 불법투척", "환승연애", "줄 새치기", "욕설", "흡연 구역 외 흡연", "무단 촬영", "말 돌리기", "카트 방치", "자리 킵", "음식 남기기", "초면에 반말", "잠수이별", "가래침", "지각"],
 };
 
-// Q7은 스타일과 연결해야 하므로 라벨/값 분리(값은 고정 키)
+// Q7: 스타일 라벨/값 분리(값은 prompts 키와 일치)
 const POOL_Q7: QOption[] = [
   { label: "무라카미 소라치의 진혼", value: "byungmat" },
   { label: "문수림의 20에서 30까지", value: "msr" },
@@ -30,6 +31,7 @@ const POOL_Q7: QOption[] = [
 // 2) 유틸: 풀에서 N개 랜덤 샘플
 // ----------------------
 function sampleN<T>(arr: T[], n: number): T[] {
+  if (n >= arr.length) return [...arr];
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
     const j = (Math.random() * (i + 1)) | 0;
@@ -39,17 +41,17 @@ function sampleN<T>(arr: T[], n: number): T[] {
 }
 
 // ----------------------
-// 3) 세션용 질문 생성 (매 세션 1회만 뽑아서 고정)
+// 3) 세션용 질문 생성 (시작하기 누를 때마다 랜덤 1회)
 // ----------------------
 function buildSessionQuestions(): QItem[] {
   return [
-    { id: 1, text: "당신은 무엇으로 환생하고 싶나요?", options: sampleN(POOLS.q1, 4).map(label => ({ label, value: label })) },
-    { id: 2, text: "평소 무엇이 가장 불편한가요?", options: sampleN(POOLS.q2, 4).map(label => ({ label, value: label })) },
-    { id: 3, text: "조금이라도 안정감을 느끼는 장소는?", options: sampleN(POOLS.q3, 4).map(label => ({ label, value: label })) },
-    { id: 4, text: "다음 중 평화와 가장 관련이 깊다고 생각되는 것은?", options: sampleN(POOLS.q4, 4).map(label => ({ label, value: label })) },
-    { id: 5, text: "당신이 정말 용납하기 힘든 것은?", options: sampleN(POOLS.q5, 4).map(label => ({ label, value: label })) },
-    { id: 6, text: "헤어진 연인에게 권하고 싶은 영화 장르는?", options: ["로맨틱 코미디", "스릴러", "호러", "반전 드라마"].map(label => ({ label, value: label })) },
-    { id: 7, text: "당신이 휴가철에 읽고 싶은 작가의 책은?", options: POOL_Q7 }, // Q7은 그대로 4개
+    { id: 1, text: "당신은 무엇으로 환생하고 싶나요?", options: sampleN(POOLS.q1, 4).map((label) => ({ label, value: label })) },
+    { id: 2, text: "평소 무엇이 가장 불편한가요?", options: sampleN(POOLS.q2, 4).map((label) => ({ label, value: label })) },
+    { id: 3, text: "조금이라도 안정감을 느끼는 장소는?", options: sampleN(POOLS.q3, 4).map((label) => ({ label, value: label })) },
+    { id: 4, text: "다음 중 평화와 가장 관련이 깊다고 생각되는 것은?", options: sampleN(POOLS.q4, 4).map((label) => ({ label, value: label })) },
+    { id: 5, text: "당신이 정말 용납하기 힘든 것은?", options: sampleN(POOLS.q5, 4).map((label) => ({ label, value: label })) },
+    { id: 6, text: "헤어진 연인에게 권하고 싶은 영화 장르는?", options: ["로맨틱 코미디", "스릴러", "호러", "반전 드라마"].map((label) => ({ label, value: label })) },
+    { id: 7, text: "당신이 휴가철에 읽고 싶은 작가의 책은?", options: POOL_Q7 },
   ];
 }
 
@@ -57,27 +59,27 @@ export default function PlayPage() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [step, setStep] = useState(0);
 
-  // 세션마다 고정되는 질문 세트
+  // 세션 상태
   const [sessionQs, setSessionQs] = useState<QItem[]>([]);
-  const [answers, setAnswers] = useState<string[]>(Array(sessionQs.length).fill(""));
+  const [answers, setAnswers] = useState<string[]>([]);
   const [notice, setNotice] = useState("");
   const [story, setStory] = useState("");
 
-const start = () => {
-  const newQs = buildSessionQuestions();
-  setSessionQs(newQs);
-  setPhase("asking");
-  setStep(0);
-  setAnswers(Array(newQs.length).fill(""));
-  setStory("");
-  setNotice("");
-};
-  
+  const start = () => {
+    const newQs = buildSessionQuestions();
+    setSessionQs(newQs);
+    setPhase("asking");
+    setStep(0);
+    setAnswers(Array(newQs.length).fill(""));
+    setStory("");
+    setNotice("");
+  };
+
   const currentQ = sessionQs[step];
 
   const onSelect = (value: string) => {
     const next = [...answers];
-    next[step] = value; // value 저장(라벨=값인 질문은 동일)
+    next[step] = value;
     setAnswers(next);
     setNotice("");
   };
@@ -96,25 +98,25 @@ const start = () => {
     setPhase("writing");
     setNotice("이야기를 정리하는 중…");
 
-    const words = answers.slice(0, 5); // Q1~Q5 선택값(=label=value)
-    const style = answers[6]; // Q7은 이미 value가 'byungmat'|'msr'|'king'|'ephron'
+    const words = answers.slice(0, 5); // Q1~Q5
+    const style = answers[6]; // Q7: 'byungmat' | 'msr' | 'king' | 'ephron'
+    const promptText = buildPrompt(style as "byungmat" | "msr" | "king" | "ephron", words);
 
     fetch("/api/generate-story", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ style, words }),
+      // 백엔드가 예전 형식을 기대해도 깨지지 않도록 모두 전송
+      body: JSON.stringify({ prompt: promptText, style, words }),
     })
       .then((r) => r.json())
       .then((data) => {
-        if (data.result) {
+        if (data?.result) {
           setStory(data.result);
-          setPhase("done");
-          setNotice("");
         } else {
           setStory("생성 실패… 다시 시도해 주세요.");
-          setPhase("done");
-          setNotice("");
         }
+        setPhase("done");
+        setNotice("");
       })
       .catch(() => {
         setStory("API 호출 실패… 다시 시도해 주세요.");
@@ -139,7 +141,7 @@ const start = () => {
           </div>
         )}
 
-        {phase === "asking" && (
+        {phase === "asking" && currentQ && (
           <section>
             <div className="qhead">
               <span className="qno">Q{step + 1}</span>
@@ -172,10 +174,10 @@ const start = () => {
             </div>
 
             <div className="progress">
-               <div 
-                 className="bar"
-                 style={{
-                  width: `${sessionQs.length ? ((step + 1) / sessionQs.length) * 100 : 0}%`
+              <div
+                className="bar"
+                style={{
+                  width: `${sessionQs.length ? ((step + 1) / sessionQs.length) * 100 : 0}%`,
                 }}
               />
             </div>
