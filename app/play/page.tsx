@@ -193,48 +193,6 @@ export default function Home() {
           </section>
         )}
       </div>
-
-      {/* 내부 스타일: 바닐라 CSS용 클래스명 (global.css에 옮겨 사용 권장) */}
-      <style jsx>{`
-        .wrap { min-height: 100dvh; display:flex; align-items:center; justify-content:center; padding:24px; background:#0b0c10; }
-        .card { width: min(960px, 100%); background:#121418; border:1px solid #1f232b; border-radius:20px; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.25);}      
-        .header { text-align:center; margin-bottom:16px; }
-        .title { color:#e8ecf1; font-size:28px; margin:0; letter-spacing:0.2px; }
-        .subtitle { color:#aeb7c2; margin:6px 0 0; font-size:14px; }
-        .center { display:flex; align-items:center; justify-content:center; }
-        .btn { appearance:none; border:none; border-radius:12px; padding:12px 18px; background:#262b35; color:#e8ecf1; cursor:pointer; font-weight:600; }
-        .btn:hover { filter:brightness(1.08) }
-        .btn:disabled { opacity:.5; cursor:not-allowed }
-        .btn.primary { background:#4452fe; }
-
-        .ask { margin-top:8px; }
-        .qhead { display:flex; gap:10px; align-items:center; margin-bottom:12px; }
-        .qno { background:#2a2f3a; color:#d9e1ea; padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px; }
-        .qtext { color:#e8ecf1; font-size:18px; font-weight:600; }
-        .options { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
-        .option { display:flex; gap:10px; align-items:center; background:#1a1e26; border:1px solid #262b36; border-radius:12px; padding:12px; cursor:pointer; }
-        .option.active { border-color:#4452fe; box-shadow:0 0 0 2px rgba(68,82,254,.2) inset; }
-        .option input { display:none }
-        .option span { color:#dfe6ee; font-size:14px; }
-        .notice { margin:10px 2px 0; color:#ffb3b3; font-size:13px; }
-        .actions { display:flex; justify-content:space-between; gap:8px; margin-top:14px; }
-        .progress { height:6px; background:#1a1e26; border-radius:999px; overflow:hidden; margin-top:14px; }
-        .bar { height:100%; background:linear-gradient(90deg, #4452fe, #7aa2ff); }
-
-        .result { display:grid; gap:16px; margin-top:12px; }
-        .imgbox { width:100%; aspect-ratio:16/9; background:#0e1116; border:1px solid #202431; border-radius:14px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
-        .imgbox img { width:100%; height:100%; object-fit:cover; }
-        .img-skeleton { color:#8e9aab; font-size:14px; }
-        .story { background:#0f1218; border:1px solid #202431; border-radius:14px; padding:16px; }
-        .story p { color:#dfe6ee; line-height:1.7; margin:0 0 10px; }
-        .typing { color:#9fb0c5; }
-        .status { text-align:center; color:#9fb0c5; font-size:13px; }
-
-        @media (max-width: 560px) {
-          .options { grid-template-columns:1fr; }
-          .title { font-size:22px }
-        }
-      `}</style>
     </main>
   )
 }
