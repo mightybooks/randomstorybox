@@ -106,10 +106,10 @@ export default function PlayPage(){
 
     try {
       // API 요청 스키마(Zod)와 맞추기 위해 prompt는 보내지 않습니다.
-      await generate({ style, words });
+      await generate({ prompt: promptText, style, words });
     } finally {
       clearTimeout(delayId);
-      setPhase("done");
+      // 완료 전환은 응답이 도착했을 때로 지연 (아래 useEffect에서 처리)
       setNotice("");
     }
   };
