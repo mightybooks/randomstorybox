@@ -18,6 +18,7 @@ const POOLS = {
   q5: ["약속 파기", "무단횡단", "쓰레기 불법투척", "환승연애", "줄 새치기", "욕설", "흡연 구역 외 흡연", "무단 촬영", "말 돌리기", "카트 방치", "자리 킵", "음식 남기기", "초면에 반말", "잠수이별", "가래침", "지각"],
 };
 
+// Q7: 스타일 라벨/값 분리(값은 prompts 키와 일치)
 const POOL_Q7: QOption[] = [
   { label: "무라카미 소라치의 진혼", value: "byungmat" },
   { label: "문수림의 20에서 30까지", value: "msr" },
@@ -42,7 +43,7 @@ function buildSessionQuestions(): QItem[] {
     { id: 3, text: "조금이라도 안정감을 느끼는 장소는?", options: sampleN(POOLS.q3, 4).map((label) => ({ label, value: label })) },
     { id: 4, text: "다음 중 평화와 가장 관련이 깊다고 생각되는 것은?", options: sampleN(POOLS.q4, 4).map((label) => ({ label, value: label })) },
     { id: 5, text: "당신이 정말 용납하기 힘든 것은?", options: sampleN(POOLS.q5, 4).map((label) => ({ label, value: label })) },
-    { id: 6, text: "헤어진 연인에게 권하고 싶은 영화 장르는?", options: ["로맨틱 코미디", "스릴러", "호러", "반전 드라마"].map((label) => ({ label, value: label })) },
+    { id: 6, text: "다음 중 문수림 작가가 쓴 책이 아닌 것은?", options: ["괜찮아 아빠도 쉽진 않더라", "20에서 30까지", "장르불문 관통하는 글쓰기", "아프니까 중년이다"].map((label) => ({ label, value: label })) },
     { id: 7, text: "당신이 휴가철에 읽고 싶은 작가의 책은?", options: POOL_Q7 },
   ];
 }
@@ -69,7 +70,8 @@ async function copyFallback(text: string) {
 async function shareText(text: string) {
   const url = typeof window !== "undefined" ? window.location.href : undefined;
   try {
-    await copyFallback(url ? `${text}\n${url}` : text);
+    await copyFallback(url ? `${text}
+${url}` : text);
   } catch {}
   if (navigator.share) {
     try {
@@ -84,16 +86,33 @@ async function shareText(text: string) {
   alert("결과를 클립보드에 복사했습니다.");
 }
 
-async function shareApp(origin?: string) {
-  const url = origin ? `${origin}/` : "/";
-  try {
-    if (navigator.share) {
-      await navigator.share({ title: "랜덤서사박스", url });
-    } else {
-      await copyFallback(url);
-      alert("앱 주소가 복사되었습니다.");
-    }
-  } catch {}
+// --- 안전 인코딩/디코딩 ---
+function encodeStoryBase64(text: string) {
+  return typeof window === "undefined" ? "" : btoa(unescape(encodeURIComponent(text)));
+}
+function decodeStoryBase64(b64: string) {
+  return typeof window === "undefined" ? "" : decodeURIComponent(escape(atob(b64)));
+}
+
+// --- 현재 스토리로 공유용 URL 만들기 (?s=...) ---
+function buildShareUrlFromStory(story: string) {
+  if (typeof window === "undefined" || !story) return "";
+  const s = encodeURIComponent(encodeStoryBase64(story));
+  return `${window.location.origin}/play?s=${s}`;
+}
+
+// --- 결과 공유(링크 중심) ---
+async function shareResult(story: string) {
+  const url = buildShareUrlFromStory(story);
+  if (!url) return;
+  try { await copyFallback(url); } catch {}
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: "랜덤서사박스 결과", url });
+      return;
+    } catch {}
+  }
+  alert("공유 링크를 클립보드에 복사했습니다. 원하는 앱에 붙여넣기 해주세요.");
 }
 
 export default function PlayPage() {
@@ -106,11 +125,28 @@ export default function PlayPage() {
   const [story, setStory] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [randomBanner, setRandomBanner] = useState("");
+  const [loadingMsg, setLoadingMsg] = useState("");
 
   useEffect(() => {
     const banners = Array.from({ length: 12 }, (_, i) => `/banners/adver${String(i + 1).padStart(2, "0")}.webp`);
     const idx = Math.floor(Math.random() * banners.length);
     setRandomBanner(banners[idx]);
+  }, []);
+
+  // 공유 링크로 들어온 경우 (?s=...) → 바로 결과 화면으로
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const sParam = sp.get("s");
+    if (!sParam) return;
+    try {
+      const decoded = decodeStoryBase64(decodeURIComponent(sParam));
+      if (decoded) {
+        setStory(decoded);
+        setPhase("done");
+        setNotice("");
+      }
+    } catch {}
   }, []);
 
   const start = () => {
@@ -143,10 +179,18 @@ export default function PlayPage() {
       setStep(step + 1);
       return;
     }
+    // writing 진입 시 로딩 멘트 랜덤 선택
+    const loadingMessages = [
+      "연관성 없어 보이는 단어를 연결한 글쓰기는",
+      "실제 문수림 작가의 실전 작법 중 하나압니다",
+      "저서 <장르불문 관통하는 글쓰기>에 연습법을 소개하고 있습니다",
+    ];
+    setLoadingMsg(loadingMessages[Math.floor(Math.random() * loadingMessages.length)]);
+
     setPhase("writing");
     setNotice("이야기를 정리하는 중…");
-    const words = answers.slice(0, 5);
-    const style = answers[6];
+    const words = answers.slice(0, 5); // Q1~Q5
+    const style = answers[6]; // Q7
     const promptText = buildPrompt(style as "byungmat" | "msr" | "king" | "ephron", words);
     fetch("/api/generate-story", {
       method: "POST",
@@ -157,8 +201,6 @@ export default function PlayPage() {
       .then((data) => {
         if (data?.result) {
           setStory(data.result);
-          // 이미지 생성이 아직 없다면 빈값 유지 → 엑박 방지
-          // setImageUrl(generatedImageUrl);
         } else {
           setStory("생성 실패… 다시 시도해 주세요.");
         }
@@ -214,9 +256,12 @@ export default function PlayPage() {
         {(phase === "writing" || phase === "done") && (
           <section className="rsb-result">
             {/* 1) 생성된 이야기 */}
-            <article className="rsb-story">
-              {story ? story.split("
-").map((line, i) => <p key={i}>{line}</p>) : <p className="rsb-wip">이야기를 정리하는 중…</p>}
+            <article className="rsb-story whitespace-pre-line">
+              {story
+                ? story.split(/
+?
+/).map((line, i) => (line.trim() ? <p key={i}>{line}</p> : <br key={i} />))
+                : <p className="rsb-wip">{loadingMsg || "이야기를 정리하는 중…"}</p>}
             </article>
 
             {/* 2) (옵션) 이야기 이미지 — 실제 URL 있을 때만, 완료 후에만 */}
@@ -235,7 +280,8 @@ export default function PlayPage() {
 
             {/* 3) 랜덤 배너 — 완료 후에만 표시 (생성보다 먼저 나오지 않도록) */}
             {phase === "done" && !!randomBanner && (
-              <div className="mb-6">
+              <div className="mb-6 text-center">
+                <p className="text-sm text-gray-500 mb-2">아래 배너는 자체 광고 배너입니다.</p>
                 <Image
                   src={randomBanner}
                   alt="광고 배너"
@@ -251,11 +297,10 @@ export default function PlayPage() {
               <div className="rsb-actions rsb-actions-grid">
                 <button className="rsb-btn" onClick={() => router.push("/")}>홈으로</button>
                 <button className="rsb-btn" onClick={start}>다시하기</button>
-                {/* 전체 텍스트 복사 전용 (공유타겟이 URL만 받는 경우 대비) */}
+                {/* 결과 전문만 복사 */}
                 <button className="rsb-btn" onClick={() => copyFallback(story)}>결과 복사</button>
-                {/* 브라우저/앱 공유 — 일부 대상은 URL만 처리할 수 있음 */}
-                <button className="rsb-btn" onClick={() => shareText(story)}>결과 공유</button>
-                <button className="rsb-btn" onClick={() => shareApp(typeof window !== "undefined" ? window.location.origin : undefined)}>앱 공유</button>
+                {/* 브라우저/앱 공유 — URL만 공유되는 환경 대비 */}
+                <button className="rsb-btn" onClick={() => shareResult(story)}>결과 공유</button>
               </div>
             )}
           </section>
