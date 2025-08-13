@@ -137,19 +137,3 @@ export default function PlayPage(){
 // 11) /app/api/generate-story/route.ts  (서버 라우트; 안전 mock)
 import { NextResponse } from "next/server";
 
-export async function POST(req: Request){
-  try {
-    const json = await req.json();
-    const input = GenerateRequest.parse(json); // ✅ 서버측 검증
-
-    // TODO: 실제 OpenAI 호출 로직으로 교체
-    const result = `# 생성된 이야기\n\n스타일: ${input.style}\n단어: ${input.words.join(", ")}\n\n${input.prompt}\n\n(이 블록은 데모용 mock입니다. 실제 모델 호출로 교체하세요.)`;
-
-    return NextResponse.json({ result, meta: { model: "mock", durationMs: 1 } });
-  } catch (e: any) {
-    if (e?.name === "ZodError") {
-      return NextResponse.json({ message: "검증에 실패했습니다.", issues: e.issues }, { status: 422 });
-    }
-    return NextResponse.json({ message: "서버 오류입니다." }, { status: 500 });
-  }
-}
