@@ -122,6 +122,13 @@ export default function PlayPage(){
 
   const displayStory = storyFromShare || genText;
 
+  // ✅ 생성이 끝났을 때 화면 상태를 done으로 전환
+useEffect(() => {
+  if (phase === "writing" && genPhase === "done" && !genError) {
+    setPhase("done");
+  }
+}, [genPhase, genError, phase]);
+
   return (
     <main className="rsb-app" aria-busy={phase === "writing"}>
       <div className="rsb-card">
