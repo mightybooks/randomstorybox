@@ -136,7 +136,6 @@ export default function PlayPage(){
 
 // 11) /app/api/generate-story/route.ts  (서버 라우트; 안전 mock)
 import { NextResponse } from "next/server";
-import { GenerateRequest } from "../../../lib/schemas";
 
 export async function POST(req: Request){
   try {
