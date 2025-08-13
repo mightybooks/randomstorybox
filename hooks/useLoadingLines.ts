@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 export function useLoadingLines(active: boolean, total: number, intervalMs = 2000) {
   const [idx, setIdx] = useState(0);
   useEffect(() => {
