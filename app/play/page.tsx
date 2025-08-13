@@ -105,7 +105,8 @@ export default function PlayPage(){
     }, 3500);
 
     try {
-      await generate({ prompt: promptText, style, words });
+      // API 요청 스키마(Zod)와 맞추기 위해 prompt는 보내지 않습니다.
+      await generate({ style, words });
     } finally {
       clearTimeout(delayId);
       setPhase("done");
@@ -145,7 +146,7 @@ export default function PlayPage(){
 
         {(phase === "writing" || phase === "done") && (
           <>
-            <ResultView text={displayStory} isWriting={phase === "writing"} loadingLines={LOADING_LINES} loadingIdx={loadingIdx} error={genError} />
+            <ResultView text={displayStory} isWriting={genPhase === "writing"} loadingLines={LOADING_LINES} loadingIdx={loadingIdx} error={genError} />
 
             {phase === "done" && !!imageUrl && (
               <div className="mb-6"><Image src={imageUrl} alt="이야기 이미지" width={512} height={512} onError={()=>setImageUrl("")} className="rounded-lg shadow-md mx-auto"/></div>
