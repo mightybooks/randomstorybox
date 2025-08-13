@@ -256,13 +256,15 @@ export default function PlayPage() {
         {(phase === "writing" || phase === "done") && (
           <section className="rsb-result">
             {/* 1) 생성된 이야기 */}
-            <article className="rsb-story whitespace-pre-line">
-              {story
-                ? story.split(/
-?
-/).map((line, i) => (line.trim() ? <p key={i}>{line}</p> : <br key={i} />))
-                : <p className="rsb-wip">{loadingMsg || "이야기를 정리하는 중…"}</p>}
-            </article>
+         <article className="rsb-story whitespace-pre-line">
+  {story
+    ? story.split('\n').map((raw, i) => {
+        // 윈도우 줄바꿈(\r\n) 대응: 마지막 \r 제거
+        const line = raw.endsWith('\r') ? raw.slice(0, -1) : raw;
+        return line.trim() ? <p key={i}>{line}</p> : <br key={i} />;
+      })
+    : <p className="rsb-wip">{loadingMsg || "이야기를 정리하는 중…"}</p>}
+</article>
 
             {/* 2) (옵션) 이야기 이미지 — 실제 URL 있을 때만, 완료 후에만 */}
             {phase === "done" && !!imageUrl && (
