@@ -157,7 +157,8 @@ export default function PlayPage() {
       .then((data) => {
         if (data?.result) {
           setStory(data.result);
-          setImageUrl("/sample/story-image.webp"); // TODO: 실제 생성 이미지 URL로 변경
+          // 이미지 생성이 아직 없다면 빈값 유지 → 엑박 방지
+          // setImageUrl(generatedImageUrl);
         } else {
           setStory("생성 실패… 다시 시도해 주세요.");
         }
@@ -212,26 +213,47 @@ export default function PlayPage() {
 
         {(phase === "writing" || phase === "done") && (
           <section className="rsb-result">
+            {/* 1) 생성된 이야기 */}
             <article className="rsb-story">
-              {story ? story.split("\n").map((line, i) => <p key={i}>{line}</p>) : <p className="rsb-wip">이야기를 정리하는 중…</p>}
+              {story ? story.split("
+").map((line, i) => <p key={i}>{line}</p>) : <p className="rsb-wip">이야기를 정리하는 중…</p>}
             </article>
 
-            {imageUrl && (
+            {/* 2) (옵션) 이야기 이미지 — 실제 URL 있을 때만, 완료 후에만 */}
+            {phase === "done" && !!imageUrl && (
               <div className="mb-6">
-                <Image src={imageUrl} alt="이야기 이미지" width={800} height={800} className="rounded-lg shadow-md" />
+                <Image
+                  src={imageUrl}
+                  alt="이야기 이미지"
+                  width={512}
+                  height={512}
+                  onError={() => setImageUrl("")}
+                  className="rounded-lg shadow-md mx-auto"
+                />
               </div>
             )}
 
-            {randomBanner && (
+            {/* 3) 랜덤 배너 — 완료 후에만 표시 (생성보다 먼저 나오지 않도록) */}
+            {phase === "done" && !!randomBanner && (
               <div className="mb-6">
-                <Image src={randomBanner} alt="광고 배너" width={800} height={800} className="rounded-lg shadow-md" />
+                <Image
+                  src={randomBanner}
+                  alt="광고 배너"
+                  width={512}
+                  height={512}
+                  className="rounded-lg shadow-md mx-auto"
+                />
               </div>
             )}
 
+            {/* 4) 액션 버튼들 */}
             {phase === "done" && (
               <div className="rsb-actions rsb-actions-grid">
                 <button className="rsb-btn" onClick={() => router.push("/")}>홈으로</button>
                 <button className="rsb-btn" onClick={start}>다시하기</button>
+                {/* 전체 텍스트 복사 전용 (공유타겟이 URL만 받는 경우 대비) */}
+                <button className="rsb-btn" onClick={() => copyFallback(story)}>결과 복사</button>
+                {/* 브라우저/앱 공유 — 일부 대상은 URL만 처리할 수 있음 */}
                 <button className="rsb-btn" onClick={() => shareText(story)}>결과 공유</button>
                 <button className="rsb-btn" onClick={() => shareApp(typeof window !== "undefined" ? window.location.origin : undefined)}>앱 공유</button>
               </div>
