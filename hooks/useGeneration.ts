@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
-import { GenerateRequest, GenerateResponse } from "../../lib/schemas";
-import { apiFetch } from "../../lib/apiClient";
+import { GenerateRequest, GenerateResponse } from "../lib/schemas";
+import { apiFetch } from "../lib/apiClient";
 
 export type GenPhase = "idle" | "writing" | "done";
 
