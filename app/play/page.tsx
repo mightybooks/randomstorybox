@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { buildPrompt } from "../../lib/prompts"; // 기존 파일 유지 사용
@@ -11,6 +11,10 @@ import { QuestionGroup, QItem } from "../../components/QuestionGroup";
 import { ResultView } from "../../components/ResultView";
 import { ActionsBar } from "../../components/ActionsBar";
 import { copyFallback, shareResult, decodeStoryBase64 } from "../../lib/share";
+
+// (추가) 토스트 훅/컴포넌트
+import { useToast } from "@/hooks/useToast";
+import { ToastRegion } from "@/components/ui/Toast";
 
 // 타입
 export type Phase = "idle" | "asking" | "writing" | "done";
@@ -65,12 +69,16 @@ export default function PlayPage(){
   const { phase: genPhase, text: genText, error: genError, isSubmitting, generate } = useGeneration();
   const loadingIdx = useLoadingLines(phase === "writing", LOADING_LINES.length, 2000);
 
+  // (추가) 토스트 훅
+  const { toasts, addToast, removeToast } = useToast();
+  const delayToastFiredRef = useRef(false);
+
   useEffect(()=>{ const banners = Array.from({length:12},(_,i)=>`/banners/adver${String(i+1).padStart(2,"0")}.webp`); const idx=Math.floor(Math.random()*banners.length); setRandomBanner(banners[idx]); },[]);
 
   // 공유 링크 (?s=...)
   useEffect(()=>{ if (typeof window === "undefined") return; const sp=new URLSearchParams(window.location.search); const s=sp.get("s"); if(!s) return; try{ const decoded = decodeStoryBase64(decodeURIComponent(s)); if(decoded){ setStoryFromShare(decoded); setPhase("done"); setNotice(""); }}catch{} },[]);
 
-  const start = ()=>{ const newQs=buildSessionQuestions(); setSessionQs(newQs); setPhase("asking"); setStep(0); setAnswers(Array(newQs.length).fill("")); setStoryFromShare(""); setImageUrl(""); setNotice(""); if (typeof window!=="undefined") window.scrollTo({top:0,behavior:"smooth"}); };
+  const start = ()=>{ const newQs=buildSessionQuestions(); setSessionQs(newQs); setPhase("asking"); setStep(0); setAnswers(Array(newQs.length).fill("")); setStoryFromShare(""); setImageUrl(""); setNotice(""); delayToastFiredRef.current = false; if (typeof window!=="undefined") window.scrollTo({top:0,behavior:"smooth"}); };
 
   const currentQ = sessionQs[step];
   const onSelect = (value: string)=>{ const next=[...answers]; next[step]=value; setAnswers(next); setNotice(""); };
@@ -78,17 +86,43 @@ export default function PlayPage(){
   const nextStep = async ()=>{
     if (!answers[step]){ setNotice("선택지를 골라주세요."); return; }
     if (step < sessionQs.length - 1){ setStep(step+1); return; }
-    setPhase("writing"); setNotice("이야기를 정리하는 중…");
-    const words = answers.slice(0,5); const style = answers[6];
+
+    // 마지막 단계 → 생성 시작
+    setPhase("writing");
+    setNotice("이야기를 정리하는 중…");
+    delayToastFiredRef.current = false; // 새 요청마다 초기화
+
+    const words = answers.slice(0,5);
+    const style = answers[6];
     const promptText = buildPrompt(style as "byungmat"|"msr"|"king"|"ephron", words);
-    await generate({ prompt: promptText, style, words });
-    setPhase("done"); setNotice("");
+
+    // 3.5초 지연시 단 한 번만 토스트
+    const delayId = setTimeout(() => {
+      if (!delayToastFiredRef.current) {
+        addToast("처리가 지연되고 있습니다. 잠시만 기다려주세요.");
+        delayToastFiredRef.current = true;
+      }
+    }, 3500);
+
+    try {
+      await generate({ prompt: promptText, style, words });
+    } finally {
+      clearTimeout(delayId);
+      setPhase("done");
+      setNotice("");
+    }
   };
+
+  // useGeneration 훅에서 에러가 올라오면 한글 표준 메시지로 토스트
+  useEffect(() => {
+    if (!genError) return;
+    addToast(mapKnownError(genError), "error");
+  }, [genError, addToast]);
 
   const displayStory = storyFromShare || genText;
 
   return (
-    <main className="rsb-app">
+    <main className="rsb-app" aria-busy={phase === "writing"}>
       <div className="rsb-card">
         <header className="rsb-header">
           <h1 className="rsb-title">문수림의 랜덤서사박스</h1>
@@ -100,10 +134,10 @@ export default function PlayPage(){
         {phase === "asking" && currentQ && (
           <section>
             <QuestionGroup q={currentQ} selected={answers[step]} onSelect={onSelect} disabled={isSubmitting} />
-            {notice && <p className="rsb-notice">{notice}</p>}
+            {notice && <p className="rsb-notice" aria-live="polite">{notice}</p>}
             <div className="rsb-actions">
-              <button className="rsb-btn" onClick={()=>setStep(Math.max(0, step-1))} disabled={step===0 || isSubmitting}>이전</button>
-              <button className="rsb-btn rsb-primary" onClick={nextStep} disabled={isSubmitting}>{step===sessionQs.length-1 ? (isSubmitting?"생성 중…":"완료") : "다음"}</button>
+              <button className="rsb-btn" onClick={()=>setStep(Math.max(0, step-1))} disabled={step===0 || isSubmitting} aria-disabled={step===0 || isSubmitting}>이전</button>
+              <button className="rsb-btn rsb-primary" onClick={nextStep} disabled={isSubmitting} aria-disabled={isSubmitting}>{step===sessionQs.length-1 ? (isSubmitting?"생성 중…":"완료") : "다음"}</button>
             </div>
             <div className="rsb-progress"><div className="rsb-bar" style={{ width: `${sessionQs.length ? ((step + 1) / sessionQs.length) * 100 : 0}%` }} /></div>
           </section>
@@ -130,10 +164,26 @@ export default function PlayPage(){
           </>
         )}
       </div>
+
+      {/* 토스트 렌더링 영역 */}
+      <ToastRegion toasts={toasts} removeToast={removeToast} />
     </main>
   );
 }
 
-// 11) /app/api/generate-story/route.ts  (서버 라우트; 안전 mock)
-import { NextResponse } from "next/server";
+// 표준 에러 메시지 매핑 (TIMEOUT/422/429/500/502 등)
+function mapKnownError(err: any) {
+  // 우선순위: Abort/Timeout → 상태코드 → 기본값
+  const name = err?.name || "";
+  const status = err?.status || err?.code || 0;
+  const msg = (typeof err?.message === "string" ? err.message : "").toLowerCase();
 
+  if (name === "AbortError" || msg.includes("timeout") || status === 408) {
+    return "응답이 지연됩니다. 잠시 후 다시 시도해주세요.";
+  }
+  if (status === 422 || msg.includes("422")) return "입력값을 다시 확인해주세요.";
+  if (status === 429 || msg.includes("rate") || msg.includes("429")) return "요청이 많습니다. 잠시 후 시도해주세요.";
+  if (status === 500 || status === 502 || msg.includes("500") || msg.includes("502")) return "서버 오류입니다. 잠시 후 재시도해주세요.";
+
+  return "알 수 없는 오류가 발생했습니다.";
+}
