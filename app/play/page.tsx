@@ -214,10 +214,14 @@ export default function PlayPage() {
         {(phase === "writing" || phase === "done") && (
           <section className="rsb-result">
             {/* 1) 생성된 이야기 */}
-            <article className="rsb-story">
-              {story ? story.split("
-").map((line, i) => <p key={i}>{line}</p>) : <p className="rsb-wip">이야기를 정리하는 중…</p>}
-            </article>
+<article className="rsb-story">
+  {story
+    ? story.split(/\r?\n/).map((line, i) =>
+        line.trim() ? <p key={i}>{line}</p> : <br key={i} />
+      )
+    : <p className="rsb-wip">이야기를 정리하는 중…</p>}
+</article>
+
 
             {/* 2) (옵션) 이야기 이미지 — 실제 URL 있을 때만, 완료 후에만 */}
             {phase === "done" && !!imageUrl && (
