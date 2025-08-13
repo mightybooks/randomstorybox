@@ -302,17 +302,20 @@ useEffect(() => {
             )}
 
             {/* 3) 랜덤 배너 — 완료 후에만 표시 (생성보다 먼저 나오지 않도록) */}
-            {phase === "done" && !!randomBanner && (
-              <div className="mb-6">
-                <Image
-                  src={randomBanner}
-                  alt="광고 배너"
-                  width={512}
-                  height={512}
-                  className="rounded-lg shadow-md mx-auto"
-                />
-              </div>
-            )}
+           {phase === "done" && !!randomBanner && (
+            <div className="mb-6 text-center">
+              <p className="text-sm text-gray-500 mb-2">
+              아래 배너는 자체 광고 배너입니다.
+              </p>
+              <Image
+              src={randomBanner}
+              alt="광고 배너"
+              width={512}
+              height={512}
+              className="rounded-lg shadow-md mx-auto"
+              />
+            </div>
+          )}
 
             {/* 4) 액션 버튼들 */}
             {phase === "done" && (
@@ -320,7 +323,7 @@ useEffect(() => {
                 <button className="rsb-btn" onClick={() => router.push("/")}>홈으로</button>
                 <button className="rsb-btn" onClick={start}>다시하기</button>
                 {/* 전체 텍스트 복사 전용 (공유타겟이 URL만 받는 경우 대비) */}
-             <button className="rsb-btn" onClick={() => copyResult(story)}>결과 복사</button>
+             <button className="rsb-btn" onClick={() => copyFallback(story)}>결과 복사</button>
              <button className="rsb-btn" onClick={() => shareResult(story)}>결과 공유</button>
              <button className="rsb-btn" onClick={() => shareApp(typeof window !== "undefined" ? window.location.origin : undefined)}>앱 공유</button>
               </div>
