@@ -84,49 +84,6 @@ async function shareText(text: string) {
   alert("결과를 클립보드에 복사했습니다.");
 }
 
-// --- 안전 인코딩/디코딩 ---
-function encodeStoryBase64(text: string) {
-  // 유니코드 안전 인코딩
-  return typeof window === "undefined" ? "" : btoa(unescape(encodeURIComponent(text)));
-}
-function decodeStoryBase64(b64: string) {
-  return typeof window === "undefined" ? "" : decodeURIComponent(escape(atob(b64)));
-}
-
-// --- 현재 스토리로 공유용 URL 만들기 (?s=...) ---
-function buildShareUrlFromStory(story: string) {
-  if (typeof window === "undefined" || !story) return "";
-  const s = encodeURIComponent(encodeStoryBase64(story));
-  return `${window.location.origin}/play?s=${s}`;
-}
-
-// --- 결과 공유(링크 중심) ---
-async function shareResult(story: string) {
-  const url = buildShareUrlFromStory(story);
-  if (!url) return;
-
-  // 우선 링크를 클립보드에 복사(안전장치)
-  try { await copyFallback(url); } catch {}
-
-  // 공유 시트가 텍스트를 무시해도 URL만으로 열리면 결과가 보임
-  if (navigator.share) {
-    try {
-      await navigator.share({ title: "랜덤서사박스 결과", url });
-      return;
-    } catch {}
-  }
-  alert("공유 링크를 클립보드에 복사했습니다. 원하는 앱에 붙여넣기 해주세요.");
-}
-
-// --- 결과 전체 텍스트 + 링크 동시 복사 ---
-async function copyResult(story: string) {
-  const url = buildShareUrlFromStory(story);
-  const payload = url ? `${story}\n\n— 공유 링크 —\n${url}` : story;
-  await copyFallback(payload);
-  alert("결과 전문과 링크를 복사했습니다.");
-}
-
-
 async function shareApp(origin?: string) {
   const url = origin ? `${origin}/` : "/";
   try {
@@ -155,27 +112,6 @@ export default function PlayPage() {
     const idx = Math.floor(Math.random() * banners.length);
     setRandomBanner(banners[idx]);
   }, []);
-
-  // 공유 링크로 들어온 경우 (?s=...) → 바로 결과 화면으로
-useEffect(() => {
-  if (typeof window === "undefined") return;
-  const sp = new URLSearchParams(window.location.search);
-  const sParam = sp.get("s");
-  if (!sParam) return;
-  try {
-    const decoded = decodeStoryBase64(decodeURIComponent(sParam));
-    if (decoded) {
-      setStory(decoded);
-      setPhase("done");           // 질문 없이 바로 결과 모드
-      setNotice("");
-      // 배너는 이미 다른 useEffect에서 선택됨
-      // 이미지 URL은 없으니 엑박 방지 로직 그대로 유지
-    }
-  } catch {
-    // 파싱 실패 시 무시하고 기존 플로우 진행
-  }
-}, []);
-
 
   const start = () => {
     const newQs = buildSessionQuestions();
@@ -278,14 +214,10 @@ useEffect(() => {
         {(phase === "writing" || phase === "done") && (
           <section className="rsb-result">
             {/* 1) 생성된 이야기 */}
-<article className="rsb-story">
-  {story
-    ? story.split(/\r?\n/).map((line, i) =>
-        line.trim() ? <p key={i}>{line}</p> : <br key={i} />
-      )
-    : <p className="rsb-wip">이야기를 정리하는 중…</p>}
-</article>
-
+            <article className="rsb-story">
+              {story ? story.split("
+").map((line, i) => <p key={i}>{line}</p>) : <p className="rsb-wip">이야기를 정리하는 중…</p>}
+            </article>
 
             {/* 2) (옵션) 이야기 이미지 — 실제 URL 있을 때만, 완료 후에만 */}
             {phase === "done" && !!imageUrl && (
@@ -302,20 +234,17 @@ useEffect(() => {
             )}
 
             {/* 3) 랜덤 배너 — 완료 후에만 표시 (생성보다 먼저 나오지 않도록) */}
-           {phase === "done" && !!randomBanner && (
-            <div className="mb-6 text-center">
-              <p className="text-sm text-gray-500 mb-2">
-              아래 배너는 자체 광고 배너입니다.
-              </p>
-              <Image
-              src={randomBanner}
-              alt="광고 배너"
-              width={512}
-              height={512}
-              className="rounded-lg shadow-md mx-auto"
-              />
-            </div>
-          )}
+            {phase === "done" && !!randomBanner && (
+              <div className="mb-6">
+                <Image
+                  src={randomBanner}
+                  alt="광고 배너"
+                  width={512}
+                  height={512}
+                  className="rounded-lg shadow-md mx-auto"
+                />
+              </div>
+            )}
 
             {/* 4) 액션 버튼들 */}
             {phase === "done" && (
@@ -323,9 +252,10 @@ useEffect(() => {
                 <button className="rsb-btn" onClick={() => router.push("/")}>홈으로</button>
                 <button className="rsb-btn" onClick={start}>다시하기</button>
                 {/* 전체 텍스트 복사 전용 (공유타겟이 URL만 받는 경우 대비) */}
-             <button className="rsb-btn" onClick={() => copyFallback(story)}>결과 복사</button>
-             <button className="rsb-btn" onClick={() => shareResult(story)}>결과 공유</button>
-             <button className="rsb-btn" onClick={() => shareApp(typeof window !== "undefined" ? window.location.origin : undefined)}>앱 공유</button>
+                <button className="rsb-btn" onClick={() => copyFallback(story)}>결과 복사</button>
+                {/* 브라우저/앱 공유 — 일부 대상은 URL만 처리할 수 있음 */}
+                <button className="rsb-btn" onClick={() => shareText(story)}>결과 공유</button>
+                <button className="rsb-btn" onClick={() => shareApp(typeof window !== "undefined" ? window.location.origin : undefined)}>앱 공유</button>
               </div>
             )}
           </section>
