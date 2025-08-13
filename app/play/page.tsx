@@ -1,18 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { buildPrompt } from "../../lib/prompts"; // 경로는 프로젝트 구조에 맞게 조정
+import Image from "next/image";
+import { buildPrompt } from "../../lib/prompts";
 import "./play.css";
 
 type Phase = "idle" | "asking" | "writing" | "done";
-
 type QOption = { label: string; value: string };
 type QItem = { id: number; text: string; options: QOption[] };
 
-// ----------------------
-// 1) 질문별 대규모 단어 풀
-// ----------------------
 const POOLS = {
   q1: ["고양이", "바람", "돌멩이", "지하철 안내방송", "비둘기", "변기", "군화", "낙엽", "미나리", "신호등", "우산", "맘모스", "분리수거 라벨", "골목 자판기", "텀블러", "귤껍질"],
   q2: ["웨이팅", "소음", "반말", "더운 날씨", "냉난방 온도차", "자잘한 진동", "끈적한 바닥", "사이버렉카", "보이스피싱", "비좁은 좌석", "미세먼지", "낯선 향수 냄새", "직장 상사", "엄마", "모기", "와이파이"],
@@ -21,7 +18,6 @@ const POOLS = {
   q5: ["약속 파기", "무단횡단", "쓰레기 불법투척", "환승연애", "줄 새치기", "욕설", "흡연 구역 외 흡연", "무단 촬영", "말 돌리기", "카트 방치", "자리 킵", "음식 남기기", "초면에 반말", "잠수이별", "가래침", "지각"],
 };
 
-// Q7: 스타일 라벨/값 분리(값은 prompts 키와 일치)
 const POOL_Q7: QOption[] = [
   { label: "무라카미 소라치의 진혼", value: "byungmat" },
   { label: "문수림의 20에서 30까지", value: "msr" },
@@ -29,9 +25,6 @@ const POOL_Q7: QOption[] = [
   { label: "노라 에프런의 유브 갓 메일", value: "ephron" },
 ];
 
-// ----------------------
-// 2) 유틸: 풀에서 N개 랜덤 샘플
-// ----------------------
 function sampleN<T>(arr: T[], n: number): T[] {
   if (arr.length <= n) return [...arr];
   const a = [...arr];
@@ -42,9 +35,6 @@ function sampleN<T>(arr: T[], n: number): T[] {
   return a.slice(0, n);
 }
 
-// ----------------------
-// 3) 세션용 질문 생성 (시작하기 누를 때마다 랜덤 1회)
-// ----------------------
 function buildSessionQuestions(): QItem[] {
   return [
     { id: 1, text: "당신은 무엇으로 환생하고 싶나요?", options: sampleN(POOLS.q1, 4).map((label) => ({ label, value: label })) },
@@ -57,16 +47,11 @@ function buildSessionQuestions(): QItem[] {
   ];
 }
 
-// ----------------------
-// 4) 공유 유틸
-// ----------------------
 async function copyFallback(text: string) {
   try {
-    // HTTPS + 권한 OK인 브라우저에서는 표준 API
     await navigator.clipboard.writeText(text);
     return true;
   } catch {
-    // 폴백: 임시 textarea 만들어 선택→복사
     const ta = document.createElement("textarea");
     ta.value = text;
     ta.style.position = "fixed";
@@ -75,39 +60,28 @@ async function copyFallback(text: string) {
     document.body.appendChild(ta);
     ta.focus();
     ta.select();
-    const ok = document.execCommand("copy"); // 일부 브라우저에서 여전히 동작
+    const ok = document.execCommand("copy");
     document.body.removeChild(ta);
     return ok;
   }
 }
 
 async function shareText(text: string) {
-  const url =
-    typeof window !== "undefined" ? window.location.href : undefined;
-
-  // 1) 먼저 클립보드에 넣어두기 (일부 앱이 text를 무시해도 사용자가 붙여넣기 가능)
+  const url = typeof window !== "undefined" ? window.location.href : undefined;
   try {
-   await copyFallback(url ? `${text}\n${url}` : text);
-  } catch {
-    // HTTPS/권한 이슈로 실패할 수 있음 → 무시(공유는 계속 시도)
-  }
-
-  // 2) Web Share 지원 시 text+url 동시 전달
+    await copyFallback(url ? `${text}\n${url}` : text);
+  } catch {}
   if (navigator.share) {
     try {
       await navigator.share({
         title: "랜덤서사박스 결과",
-        text: text.length > 400 ? text.slice(0, 400) + "…" : text, // 너무 길면 잘릴 수 있어 미리 줄임
-        url, // 일부 대상은 url이 있어야 텍스트도 붙습니다
+        text: text.length > 400 ? text.slice(0, 400) + "…" : text,
+        url,
       });
       return;
-    } catch {
-      // 사용자가 취소했거나 공유 실패 → 아래 알림으로 안내
-    }
+    } catch {}
   }
-
-  // 3) Web Share 미지원/실패 시 복사 안내
-  alert("결과를 클립보드에 복사했습니다. 원하는 곳에 붙여넣기 하세요.");
+  alert("결과를 클립보드에 복사했습니다.");
 }
 
 async function shareApp(origin?: string) {
@@ -116,7 +90,7 @@ async function shareApp(origin?: string) {
     if (navigator.share) {
       await navigator.share({ title: "랜덤서사박스", url });
     } else {
-      await copyFallback(url); // ← 여기서 fallback 사용
+      await copyFallback(url);
       alert("앱 주소가 복사되었습니다.");
     }
   } catch {}
@@ -124,15 +98,20 @@ async function shareApp(origin?: string) {
 
 export default function PlayPage() {
   const router = useRouter();
-
   const [phase, setPhase] = useState<Phase>("idle");
   const [step, setStep] = useState(0);
-
-  // 세션 상태
   const [sessionQs, setSessionQs] = useState<QItem[]>([]);
   const [answers, setAnswers] = useState<string[]>([]);
   const [notice, setNotice] = useState("");
   const [story, setStory] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [randomBanner, setRandomBanner] = useState("");
+
+  useEffect(() => {
+    const banners = Array.from({ length: 12 }, (_, i) => `/banners/adver${String(i + 1).padStart(2, "0")}.webp`);
+    const idx = Math.floor(Math.random() * banners.length);
+    setRandomBanner(banners[idx]);
+  }, []);
 
   const start = () => {
     const newQs = buildSessionQuestions();
@@ -141,8 +120,8 @@ export default function PlayPage() {
     setStep(0);
     setAnswers(Array(newQs.length).fill(""));
     setStory("");
+    setImageUrl("");
     setNotice("");
-    // 맨 위로
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -164,25 +143,21 @@ export default function PlayPage() {
       setStep(step + 1);
       return;
     }
-
-    // 완료 → 글 생성
     setPhase("writing");
     setNotice("이야기를 정리하는 중…");
-
-    const words = answers.slice(0, 5); // Q1~Q5
-    const style = answers[6]; // Q7: 'byungmat' | 'msr' | 'king' | 'ephron'
+    const words = answers.slice(0, 5);
+    const style = answers[6];
     const promptText = buildPrompt(style as "byungmat" | "msr" | "king" | "ephron", words);
-
     fetch("/api/generate-story", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      // 호환을 위해 prompt + style + words 모두 전송
       body: JSON.stringify({ prompt: promptText, style, words }),
     })
       .then((r) => r.json())
       .then((data) => {
         if (data?.result) {
           setStory(data.result);
+          setImageUrl("/sample/story-image.webp"); // TODO: 실제 생성 이미지 URL로 변경
         } else {
           setStory("생성 실패… 다시 시도해 주세요.");
         }
@@ -206,9 +181,7 @@ export default function PlayPage() {
 
         {phase === "idle" && (
           <div className="rsb-center">
-            <button className="rsb-btn rsb-primary" onClick={start}>
-              시작하기
-            </button>
+            <button className="rsb-btn rsb-primary" onClick={start}>시작하기</button>
           </div>
         )}
 
@@ -218,37 +191,21 @@ export default function PlayPage() {
               <span className="rsb-qno">Q{step + 1}</span>
               <span className="rsb-qtext">{currentQ.text}</span>
             </div>
-
             <div className="rsb-options">
               {currentQ.options.map((opt) => (
                 <label key={opt.label} className={`rsb-option ${answers[step] === opt.value ? "active" : ""}`}>
-                  <input
-                    type="radio"
-                    name={`q${currentQ.id}`}
-                    checked={answers[step] === opt.value}
-                    onChange={() => onSelect(opt.value)}
-                  />
+                  <input type="radio" name={`q${currentQ.id}`} checked={answers[step] === opt.value} onChange={() => onSelect(opt.value)} />
                   <span>{opt.label}</span>
                 </label>
               ))}
             </div>
-
             {notice && <p className="rsb-notice">{notice}</p>}
-
             <div className="rsb-actions">
-              <button className="rsb-btn" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>
-                이전
-              </button>
-              <button className="rsb-btn rsb-primary" onClick={nextStep}>
-                {step === sessionQs.length - 1 ? "완료" : "다음"}
-              </button>
+              <button className="rsb-btn" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>이전</button>
+              <button className="rsb-btn rsb-primary" onClick={nextStep}>{step === sessionQs.length - 1 ? "완료" : "다음"}</button>
             </div>
-
             <div className="rsb-progress">
-              <div
-                className="rsb-bar"
-                style={{ width: `${sessionQs.length ? ((step + 1) / sessionQs.length) * 100 : 0}%` }}
-              />
+              <div className="rsb-bar" style={{ width: `${sessionQs.length ? ((step + 1) / sessionQs.length) * 100 : 0}%` }} />
             </div>
           </section>
         )}
@@ -259,20 +216,24 @@ export default function PlayPage() {
               {story ? story.split("\n").map((line, i) => <p key={i}>{line}</p>) : <p className="rsb-wip">이야기를 정리하는 중…</p>}
             </article>
 
+            {imageUrl && (
+              <div className="mb-6">
+                <Image src={imageUrl} alt="이야기 이미지" width={800} height={800} className="rounded-lg shadow-md" />
+              </div>
+            )}
+
+            {randomBanner && (
+              <div className="mb-6">
+                <Image src={randomBanner} alt="광고 배너" width={800} height={800} className="rounded-lg shadow-md" />
+              </div>
+            )}
+
             {phase === "done" && (
               <div className="rsb-actions rsb-actions-grid">
-                <button className="rsb-btn" onClick={() => router.push("/")}>
-                  홈으로
-                </button>
-                <button className="rsb-btn" onClick={start}>
-                  다시하기
-                </button>
-                <button className="rsb-btn" onClick={() => shareText(story)}>
-                  결과 공유
-                </button>
-                <button className="rsb-btn" onClick={() => shareApp(typeof window !== "undefined" ? window.location.origin : undefined)}>
-                  앱 공유
-                </button>
+                <button className="rsb-btn" onClick={() => router.push("/")}>홈으로</button>
+                <button className="rsb-btn" onClick={start}>다시하기</button>
+                <button className="rsb-btn" onClick={() => shareText(story)}>결과 공유</button>
+                <button className="rsb-btn" onClick={() => shareApp(typeof window !== "undefined" ? window.location.origin : undefined)}>앱 공유</button>
               </div>
             )}
           </section>
