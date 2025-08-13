@@ -10,6 +10,13 @@ type Phase = "idle" | "asking" | "writing" | "done";
 type QOption = { label: string; value: string };
 type QItem = { id: number; text: string; options: QOption[] };
 
+// 로딩 멘트(순환)
+const LOADING_LINES = [
+  "연관성 없어 보이는 단어를 연결한 글쓰기는",
+  "실제 문수림 작가의 실전 작법 중 하나입니다",
+  "저서 <장르불문 관통하는 글쓰기>에 연습법을 소개하고 있습니다",
+];
+
 const POOLS = {
   q1: ["고양이", "바람", "돌멩이", "지하철 안내방송", "비둘기", "변기", "군화", "낙엽", "미나리", "신호등", "우산", "맘모스", "분리수거 라벨", "골목 자판기", "텀블러", "귤껍질"],
   q2: ["웨이팅", "소음", "반말", "더운 날씨", "냉난방 온도차", "자잘한 진동", "끈적한 바닥", "사이버렉카", "보이스피싱", "비좁은 좌석", "미세먼지", "낯선 향수 냄새", "직장 상사", "엄마", "모기", "와이파이"],
@@ -125,8 +132,17 @@ export default function PlayPage() {
   const [story, setStory] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [randomBanner, setRandomBanner] = useState("");
-  const [loadingMsg, setLoadingMsg] = useState("");
+  const [loadingIdx, setLoadingIdx] = useState(0);
 
+useEffect(() => {
+  if (phase !== "writing") return;         // 글 생성 중일 때만 동작
+  setLoadingIdx(0);                         // 항상 첫 줄부터 시작
+  const id = setInterval(() => {
+    setLoadingIdx((i) => (i + 1) % LOADING_LINES.length);
+  }, 2000);
+  return () => clearInterval(id);          // done/이탈 시 정리
+}, [phase]);
+  
   useEffect(() => {
     const banners = Array.from({ length: 12 }, (_, i) => `/banners/adver${String(i + 1).padStart(2, "0")}.webp`);
     const idx = Math.floor(Math.random() * banners.length);
@@ -148,7 +164,7 @@ export default function PlayPage() {
       }
     } catch {}
   }, []);
-
+  
   const start = () => {
     const newQs = buildSessionQuestions();
     setSessionQs(newQs);
@@ -179,13 +195,6 @@ export default function PlayPage() {
       setStep(step + 1);
       return;
     }
-    // writing 진입 시 로딩 멘트 랜덤 선택
-    const loadingMessages = [
-      "연관성 없어 보이는 단어를 연결한 글쓰기는",
-      "실제 문수림 작가의 실전 작법 중 하나압니다",
-      "저서 <장르불문 관통하는 글쓰기>에 연습법을 소개하고 있습니다",
-    ];
-    setLoadingMsg(loadingMessages[Math.floor(Math.random() * loadingMessages.length)]);
 
     setPhase("writing");
     setNotice("이야기를 정리하는 중…");
@@ -256,14 +265,18 @@ export default function PlayPage() {
         {(phase === "writing" || phase === "done") && (
           <section className="rsb-result">
             {/* 1) 생성된 이야기 */}
-         <article className="rsb-story whitespace-pre-line">
+       <article className="rsb-story whitespace-pre-line">
   {story
     ? story.split('\n').map((raw, i) => {
-        // 윈도우 줄바꿈(\r\n) 대응: 마지막 \r 제거
-        const line = raw.endsWith('\r') ? raw.slice(0, -1) : raw;
+        const line = raw.endsWith('\r') ? raw.slice(0, -1) : raw; // CRLF 대응
         return line.trim() ? <p key={i}>{line}</p> : <br key={i} />;
       })
-    : <p className="rsb-wip">{loadingMsg || "이야기를 정리하는 중…"}</p>}
+    : (
+        phase === "writing"
+          ? <p className="rsb-wip">{LOADING_LINES[loadingIdx]}</p>
+          : <p className="rsb-wip">이야기를 정리하는 중…</p>
+      )
+  }
 </article>
 
             {/* 2) (옵션) 이야기 이미지 — 실제 URL 있을 때만, 완료 후에만 */}
