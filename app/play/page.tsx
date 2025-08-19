@@ -11,6 +11,7 @@ import { QuestionGroup, QItem } from "../../components/QuestionGroup";
 import { ResultView } from "../../components/ResultView";
 import { ActionsBar } from "../../components/ActionsBar";
 import { copyFallback, shareResult, decodeStoryBase64 } from "../../lib/share";
+import { useReducedMotion } from "@/hooks/useReducedMotion"; // [A11Y]
 
 // (추가) 토스트 훅/컴포넌트
 import { useToast } from "@/hooks/useToast";
@@ -67,8 +68,12 @@ export default function PlayPage(){
   const [randomBanner, setRandomBanner] = useState("");
 
   const { phase: genPhase, text: genText, error: genError, isSubmitting, generate } = useGeneration();
-  const loadingIdx = useLoadingLines(phase === "writing", LOADING_LINES.length, 2000);
+  const loadingIdx = useLoadingLines(phase === "writing", LOADING_LINES.length, loadingInterval);
 
+  // 모션 민감 사용자 대응: 로딩 문구 순환 속도 완화
+  const reduceMotion = useReducedMotion();
+  const loadingInterval = reduceMotion ? 3500 : 2000;
+  
   // (추가) 토스트 훅
   const { toasts, addToast, removeToast } = useToast();
   const delayToastFiredRef = useRef(false);
@@ -142,7 +147,20 @@ useEffect(() => {
         {phase === "asking" && currentQ && (
           <section>
             <QuestionGroup q={currentQ} selected={answers[step]} onSelect={onSelect} disabled={isSubmitting} />
-            {notice && <p className="rsb-notice" aria-live="polite">{notice}</p>}
+            {notice && (
+  <p
+    className="rsb-notice"
+    role="alert"
+    tabIndex={-1}
+    ref={(el) => {
+      if (el) el.focus(); // 오류/미선택 시 자동 포커스
+    }}
+    aria-live="polite"
+  >
+    {notice}
+  </p>
+)}
+
             <div className="rsb-actions">
               <button className="rsb-btn" onClick={()=>setStep(Math.max(0, step-1))} disabled={step===0 || isSubmitting} aria-disabled={step===0 || isSubmitting}>이전</button>
               <button className="rsb-btn rsb-primary" onClick={nextStep} disabled={isSubmitting} aria-disabled={isSubmitting}>{step===sessionQs.length-1 ? (isSubmitting?"생성 중…":"완료") : "다음"}</button>
