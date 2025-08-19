@@ -285,21 +285,23 @@ export default function PlayPage() {
             )}
 
           {phase === "done" && !!randomBanner && (
-            <div className="mb-6 text-center">
+           <div className="mb-6 text-center">
             <p className="text-sm text-gray-500 mb-2">아래 배너는 자체 광고 배너입니다.</p>
-
-            {/* 정사각형 래퍼 */}
-            <div className="relative mx-auto w-full max-w-[512px] aspect-square">
-            <Image
-              src={randomBanner}
-              alt="광고 배너"
-              fill
-              className="object-contain rounded-lg shadow-md"
-              sizes="(max-width: 640px) 100vw, 512px"
-              />
-          </div>
-        </div>
-        )}
+              <div className="mx-auto w-full max-w-[512px]">
+                <Image
+                  src={randomBanner}
+                  alt="광고 배너"
+                  // 핵심: 렌더 크기는 CSS로, 비율은 auto
+                  width={0}
+                  height={0}
+                  sizes="100vw"
+                  style={{ width: "100%", height: "auto" }}
+                  className="rounded-lg shadow-md max-h-[70vh]"
+                  unoptimized
+                  />
+                </div>
+              </div>
+              )}
 
             {phase === "done" && (
               <ActionsBar
