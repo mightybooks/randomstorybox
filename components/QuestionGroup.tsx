@@ -39,6 +39,11 @@ export function QuestionGroup({
     });
   }, [selectedIndex, disabled, items.length]);
 
+  useEffect(() => {
+  spanRefs.current = [];
+  focusIndexRef.current = Math.max(0, items.findIndex((v) => v === selected));
+}, [q.id]);
+
   const moveFocus = (next: number) => {
     const len = items.length;
     const clamped = Math.max(0, Math.min(next, len - 1));
