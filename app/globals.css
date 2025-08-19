@@ -118,17 +118,17 @@ button{ font: inherit; }
   user-select: none;
 }
 
-/* 키보드 포커스 링 */
+/* 포커스 링은 outline, 선택 상태는 border만 사용 → 겹침 완화 */
 .rsb-option-visual:focus-visible {
   outline: 3px solid var(--rsb-focus, #3b82f6);
   outline-offset: 2px;
 }
 
-/* 선택/비활성/호버 */
 .rsb-option.active .rsb-option-visual {
   border-color: var(--rsb-primary, #6366f1);
   background: color-mix(in srgb, var(--rsb-primary, #6366f1) 6%, transparent);
 }
+
 .rsb-option.is-disabled .rsb-option-visual {
   opacity: 0.6;
   cursor: not-allowed;
