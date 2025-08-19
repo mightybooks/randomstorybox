@@ -212,6 +212,7 @@ export default function PlayPage() {
         {phase === "asking" && currentQ && (
           <section>
             <QuestionGroup
+              key={currentQ.id}   
               q={currentQ}
               selected={answers[step]}
               onSelect={onSelect}
