@@ -100,12 +100,6 @@ button{ font: inherit; }
   border: 0 !important;
 }
 
-/* 옵션 라벨 컨테이너 */
-.rsb-option {
-  position: relative;
-  display: block;
-}
-
 /* 시각 카드(여기가 실제 포커스 대상) */
 .rsb-option-visual {
   display: flex;
@@ -122,11 +116,6 @@ button{ font: inherit; }
 .rsb-option-visual:focus-visible {
   outline: 3px solid var(--rsb-focus, #3b82f6);
   outline-offset: 2px;
-}
-
-.rsb-option.active .rsb-option-visual {
-  border-color: var(--rsb-primary, #6366f1);
-  background: color-mix(in srgb, var(--rsb-primary, #6366f1) 6%, transparent);
 }
 
 .rsb-option.is-disabled .rsb-option-visual {
