@@ -85,3 +85,55 @@ button{ font: inherit; }
   .title, .landing-title{ font-size:22px; }
   .rsb .options{ grid-template-columns:1fr; }
 }
+
+
+/* 라디오 입력은 시각적으로만 숨김: 포커스/탭은 유지 */
+.rsb-radio-input {
+  position: absolute;
+  inset: 0;           /* 라벨 전체를 덮어서 어디를 눌러도 클릭됨 */
+  opacity: 0;         /* 보이진 않지만 포커스 가능 */
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* 각 옵션 외관 */
+.rsb-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 12px 14px;
+  border: 1px solid var(--rsb-border, #e5e7eb);
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* 선택 상태 */
+.rsb-option.active {
+  border-color: var(--rsb-primary, #6366f1);
+  background: color-mix(in srgb, var(--rsb-primary, #6366f1) 6%, transparent);
+}
+
+/* 비활성화 */
+.rsb-option.is-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 키보드 포커스 링: input에 포커스가 들어오면 label에 테두리 표시 */
+.rsb-option:has(.rsb-radio-input:focus-visible) {
+  outline: 3px solid var(--rsb-focus, #3b82f6);
+  outline-offset: 2px;
+}
+
+/* 마우스/터치 호버(선택): 접근성 영향 없음, 취향껏 */
+.rsb-option:hover:not(.is-disabled) {
+  border-color: var(--rsb-hover, #c7c9d1);
+}
+
+/* 라벨 텍스트 */
+.rsb-option-label {
+  line-height: 1.2;
+}
