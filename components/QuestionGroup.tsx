@@ -1,22 +1,34 @@
-// 변경/추가 포인트만 발췌
-import React, { useEffect, useMemo, useRef, useCallback } from "react";
+"use client";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 
-export function QuestionGroup({ q, selected, onSelect, disabled }: { /* ... */ }) {
+export type QOption = { label: string; value: string };
+export type QItem = { id: number; text: string; options: QOption[] };
+
+type Props = {
+  q: QItem;
+  selected?: string;
+  onSelect: (value: string) => void;
+  disabled?: boolean;
+};
+
+function QuestionGroup({ q, selected, onSelect, disabled }: Props) {
+  // 현재 선택 인덱스
   const selectedIndex = useMemo(() => {
-    const i = q.options.findIndex(o => o.value === selected);
-    return i >= 0 ? i : 0;
+    const idx = q.options.findIndex((o) => o.value === selected);
+    return idx >= 0 ? idx : 0;
   }, [q.options, selected]);
 
+  // 로빙 탭인덱스용 refs
   const itemRefs = useRef<Array<HTMLDivElement | null>>([]);
   const focusIndexRef = useRef<number>(selectedIndex);
 
-  // ★ 질문 바뀔 때 refs 초기화
+  // 질문 바뀔 때 초기화
   useEffect(() => {
     itemRefs.current = [];
     focusIndexRef.current = selectedIndex;
   }, [q.id, selectedIndex]);
 
-  // ★ 로빙 탭인덱스 재계산
+  // roving tabindex 적용
   useEffect(() => {
     itemRefs.current.forEach((el, idx) => {
       if (!el) return;
@@ -24,75 +36,130 @@ export function QuestionGroup({ q, selected, onSelect, disabled }: { /* ... */ }
     });
   }, [q.id, disabled, q.options.length, selectedIndex]);
 
-  // ★ 최초 진입(또는 질문 전환) 시 옵션으로 자동 포커스
+  // 문항 진입 시(또는 전환 시) 옵션에 자동 포커스
   useEffect(() => {
     if (disabled) return;
-    // 마운트가 끝난 뒤 안전하게 포커스
-    requestAnimationFrame(() => {
+    const id = requestAnimationFrame(() => {
       const el = itemRefs.current[focusIndexRef.current];
       if (el) el.focus();
     });
+    return () => cancelAnimationFrame(id);
   }, [q.id, disabled]);
 
-  const moveFocus = useCallback((delta: number) => {
-    if (disabled) return;
-    const count = q.options.length;
-    const next = (focusIndexRef.current + delta + count) % count;
-    focusIndexRef.current = next;
-    const el = itemRefs.current[next];
-    if (el) {
-      el.tabIndex = 0;
-      el.focus();
-    }
-  }, [disabled, q.options.length]);
+  const moveFocus = useCallback(
+    (delta: number) => {
+      if (disabled) return;
+      const count = q.options.length;
+      const next = (focusIndexRef.current + delta + count) % count;
+      focusIndexRef.current = next;
+      const el = itemRefs.current[next];
+      if (el) {
+        el.tabIndex = 0;
+        el.focus();
+      }
+    },
+    [disabled, q.options.length]
+  );
 
-  const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>, idx: number, opt: { value: string }) => {
-    if (disabled) return;
-    switch (e.key) {
-      case "ArrowRight":
-      case "ArrowDown":
-        e.preventDefault(); moveFocus(1); break;
-      case "ArrowLeft":
-      case "ArrowUp":
-        e.preventDefault(); moveFocus(-1); break;
-      case "Home":
-        e.preventDefault(); focusIndexRef.current = 0; itemRefs.current[0]?.focus(); break;
-      case "End":
-        e.preventDefault(); {
+  const onKeyDown = useCallback(
+    (
+      e: React.KeyboardEvent<HTMLDivElement>,
+      idx: number,
+      opt: QOption
+    ) => {
+      if (disabled) return;
+      switch (e.key) {
+        case "ArrowRight":
+        case "ArrowDown":
+          e.preventDefault();
+          moveFocus(1);
+          break;
+        case "ArrowLeft":
+        case "ArrowUp":
+          e.preventDefault();
+          moveFocus(-1);
+          break;
+        case "Home":
+          e.preventDefault();
+          focusIndexRef.current = 0;
+          itemRefs.current[0]?.focus();
+          break;
+        case "End": {
+          e.preventDefault();
           const last = q.options.length - 1;
           focusIndexRef.current = last;
           itemRefs.current[last]?.focus();
+          break;
         }
-        break;
-      case " ":
-      case "Enter":
-        e.preventDefault(); onSelect(opt.value); break;
-      default:
-        // Tab, Shift+Tab은 막지 않습니다 → 자연스러운 그룹 탈출/복귀
-        break;
+        case " ":
+        case "Enter":
+          e.preventDefault();
+          onSelect(opt.value);
+          break;
+        default:
+          // Tab/Shift+Tab은 막지 않습니다 → 자연스러운 그룹 탈출 허용
+          break;
+      }
+    },
+    [disabled, moveFocus, onSelect, q.options.length]
+  );
+
+  // 선택값이 바뀌면 포커스 인덱스도 동기화(UX 안정)
+  useEffect(() => {
+    const idx = q.options.findIndex((o) => o.value === selected);
+    if (idx >= 0) {
+      focusIndexRef.current = idx;
+      const el = itemRefs.current[idx];
+      if (el) el.tabIndex = 0;
     }
-  }, [disabled, moveFocus, onSelect, q.options.length]);
+  }, [selected, q.options]);
 
   return (
     <section className="rsb-qsection" key={q.id}>
-      {/* ... 헤더 ... */}
-      <div className="rsb-options" role="radiogroup" aria-labelledby={`q${q.id}-label`}>
-        <span id={`q${q.id}-label`} className="sr-only">Q{q.id} 보기 선택</span>
+      <div className="rsb-qhead">
+        <span className="rsb-qno">Q{q.id}</span>
+        <span id={`q${q.id}-label`} className="rsb-qtext">
+          {q.text}
+        </span>
+      </div>
+
+      <div
+        className="rsb-options"
+        role="radiogroup"
+        aria-labelledby={`q${q.id}-label`}
+      >
         {q.options.map((opt, idx) => {
           const checked = selected === opt.value;
           return (
             <div
               key={opt.value}
               ref={(el) => (itemRefs.current[idx] = el)}
-              className={`rsb-option ${checked ? "active" : ""} ${disabled ? "is-disabled" : ""}`}
+              className={`rsb-option ${checked ? "active" : ""} ${
+                disabled ? "is-disabled" : ""
+              }`}
               role="radio"
               aria-checked={checked}
               aria-disabled={disabled || undefined}
               tabIndex={-1}
               onKeyDown={(e) => onKeyDown(e, idx, opt)}
-              onClick={() => { if (!disabled) { focusIndexRef.current = idx; onSelect(opt.value); } }}
+              onClick={() => {
+                if (!disabled) {
+                  focusIndexRef.current = idx;
+                  onSelect(opt.value);
+                }
+              }}
             >
-              <input type="radio" name={`q${q.id}`} value={opt.value} checked={checked} readOnly className="sr-only" />
+              {/* 실제 폼 연동용(시각 숨김) */}
+              <input
+                type="radio"
+                name={`q${q.id}`}
+                value={opt.value}
+                checked={checked}
+                onChange={() => onSelect(opt.value)}
+                style={{ display: "none" }}
+                tabIndex={-1}
+                aria-hidden="true"
+              />
               <span>{opt.label}</span>
             </div>
           );
@@ -101,3 +168,5 @@ export function QuestionGroup({ q, selected, onSelect, disabled }: { /* ... */ }
     </section>
   );
 }
+
+export default QuestionGroup;
