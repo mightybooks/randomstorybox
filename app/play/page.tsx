@@ -284,18 +284,22 @@ export default function PlayPage() {
               </div>
             )}
 
-            {phase === "done" && !!randomBanner && (
-              <div className="mb-6 text-center">
-                <p className="text-sm text-gray-500 mb-2">아래 배너는 자체 광고 배너입니다.</p>
-                <Image
-                  src={randomBanner}
-                  alt="광고 배너"
-                  width={512}
-                  height={512}
-                  className="rounded-lg shadow-md mx-auto"
-                />
-              </div>
-            )}
+          {phase === "done" && !!randomBanner && (
+            <div className="mb-6 text-center">
+            <p className="text-sm text-gray-500 mb-2">아래 배너는 자체 광고 배너입니다.</p>
+
+            {/* 정사각형 래퍼 */}
+            <div className="relative mx-auto w-full max-w-[512px] aspect-square">
+            <Image
+              src={randomBanner}
+              alt="광고 배너"
+              fill
+              className="object-contain rounded-lg shadow-md"
+              sizes="(max-width: 640px) 100vw, 512px"
+              />
+          </div>
+        </div>
+        )}
 
             {phase === "done" && (
               <ActionsBar
