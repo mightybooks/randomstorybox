@@ -7,7 +7,7 @@ import "./play.css";
 
 import { useGeneration } from "../../hooks/useGeneration";
 import { useLoadingLines } from "../../hooks/useLoadingLines";
-import { QuestionGroup, QItem } from "../../components/QuestionGroup";
+import { QuestionGroup } from "../../components/QuestionGroup";
 import { ResultView } from "../../components/ResultView";
 import { ActionsBar } from "../../components/ActionsBar";
 import { copyFallback, shareResult, decodeStoryBase64 } from "../../lib/share";
@@ -18,6 +18,8 @@ import { ToastRegion } from "@/components/ui/Toast";
 
 export type Phase = "idle" | "asking" | "writing" | "done";
 export type QOption = { label: string; value: string };
+// Local type to avoid build error (QuestionGroup doesn't export QItem)
+type QItem = { id: number; text: string; options: QOption[] };
 
 // 로딩 멘트(순환)
 const LOADING_LINES = [
