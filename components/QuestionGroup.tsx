@@ -114,19 +114,19 @@ export function QuestionGroup({
               />
 
               {/* 실제 키보드 포커스 대상(로빙 탭인덱스) */}
-              <span
-                ref={(el) => (spanRefs.current[i] = el)}
-                className="rsb-option-visual"
-                role="radio"
-                aria-checked={isActive}
-                aria-disabled={isDisabled || undefined}
-                // tabIndex는 useEffect에서 설정(0 또는 -1)
-                onKeyDown={(e) => handleKey(e, i, opt.value)}
-                onClick={() => !isDisabled && onSelect(opt.value)}
-                data-testid={`option-${groupName}-${toSlug(opt.value)}`}
-              >
-                {opt.label}
-              </span>
+<span
+  ref={(el) => { spanRefs.current[i] = el; }}
+  className="rsb-option-visual"
+  role="radio"
+  aria-checked={isActive}
+  aria-disabled={isDisabled || undefined}
+  // tabIndex는 useEffect에서 0/-1로 설정
+  onKeyDown={(e) => handleKey(e, i, opt.value)}
+  onClick={() => !isDisabled && onSelect(opt.value)}
+  data-testid={`option-${groupName}-${toSlug(opt.value)}`}
+>
+  {opt.label}
+</span>
             </label>
           );
         })}
