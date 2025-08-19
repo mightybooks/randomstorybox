@@ -87,7 +87,7 @@ button{ font: inherit; }
 }
 
 
-/* ====== 스크린리더 전용: 시각적으로만 숨김(포커스/탭/읽기 유지) ====== */
+/* 시각적으로만 숨김: 포커스/리더는 유지 (input에 사용) */
 .sr-only {
   position: absolute !important;
   width: 1px !important;
@@ -100,13 +100,13 @@ button{ font: inherit; }
   border: 0 !important;
 }
 
-/* 옵션 라벨(컨테이너) */
+/* 옵션 라벨 컨테이너 */
 .rsb-option {
   position: relative;
   display: block;
 }
 
-/* 시각적 카드(여기에 포커스 링을 그림) */
+/* 시각 카드(여기가 실제 포커스 대상) */
 .rsb-option-visual {
   display: flex;
   align-items: center;
@@ -118,35 +118,21 @@ button{ font: inherit; }
   user-select: none;
 }
 
-/* 선택 상태 */
-.rsb-option.active .rsb-option-visual {
-  border-color: var(--rsb-primary, #6366f1);
-  background: color-mix(in srgb, var(--rsb-primary, #6366f1) 6%, transparent);
-}
-
-/* 비활성화 */
-.rsb-option.is-disabled .rsb-option-visual {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* ✅ 포커스 링 표시 — 최신/폴백 둘 다 지원 */
-
-/* 1) 최신 브라우저: :has 로 자식 input의 포커스를 감지 */
-@supports selector(:has(*)) {
-  .rsb-option:has(.rsb-radio-input:focus-visible) .rsb-option-visual {
-    outline: 3px solid var(--rsb-focus, #3b82f6);
-    outline-offset: 2px;
-  }
-}
-
-/* 2) 폴백: input 다음 형제 요소에 직접 표시 */
-.rsb-radio-input:focus-visible + .rsb-option-visual {
+/* 키보드 포커스 링 */
+.rsb-option-visual:focus-visible {
   outline: 3px solid var(--rsb-focus, #3b82f6);
   outline-offset: 2px;
 }
 
-/* 접근성 영향 없는 호버 */
+/* 선택/비활성/호버 */
+.rsb-option.active .rsb-option-visual {
+  border-color: var(--rsb-primary, #6366f1);
+  background: color-mix(in srgb, var(--rsb-primary, #6366f1) 6%, transparent);
+}
+.rsb-option.is-disabled .rsb-option-visual {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 .rsb-option:not(.is-disabled) .rsb-option-visual:hover {
   border-color: var(--rsb-hover, #c7c9d1);
 }
