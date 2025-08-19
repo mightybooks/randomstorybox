@@ -22,7 +22,12 @@ export function ResultView({
             return line.trim() ? <p key={i}>{line}</p> : <br key={i} />;
           })
         ) : isWriting ? (
-          <p className="rsb-wip">{loadingLines[loadingIdx]}</p>
+          // ✅ 여기서 role/aria-live 적용
+          <div role="status" aria-live="polite">
+            <p className="rsb-wip">
+              {loadingLines[loadingIdx % loadingLines.length]}
+            </p>
+          </div>
         ) : (
           <p className="rsb-wip">이야기를 정리하는 중…</p>
         )}
