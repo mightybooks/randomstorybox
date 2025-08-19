@@ -17,6 +17,7 @@ export function QuestionGroup({
   const groupName = `q${q.id}`;
 
   return (
+    // fieldset/legend는 페이지에서 감싸고 있으므로 여기선 section 유지
     <section>
       <div className="rsb-qhead">
         <span className="rsb-qno">Q{q.id}</span>
@@ -26,22 +27,29 @@ export function QuestionGroup({
       <div className="rsb-options">
         {q.options.map((opt) => {
           const id = `${groupName}-${opt.value}`;
+          const isActive = selected === opt.value;
+          const isDisabled = !!disabled;
+
           return (
             <label
               key={id}
               htmlFor={id}
-              className={`rsb-option ${selected === opt.value ? "active" : ""}`}
+              className={`rsb-option ${isActive ? "active" : ""} ${isDisabled ? "is-disabled" : ""}`}
+              aria-disabled={isDisabled || undefined}
             >
+              {/* 시각적으로만 숨기되, 포커스와 탭 이동은 유지 */}
               <input
                 id={id}
                 type="radio"
                 name={groupName}
                 value={opt.value}
-                checked={selected === opt.value}
+                checked={isActive}
                 onChange={() => onSelect(opt.value)}
-                disabled={disabled}
+                disabled={isDisabled}
+                className="rsb-radio-input"
               />
-              <span>{opt.label}</span>
+
+              <span className="rsb-option-label">{opt.label}</span>
             </label>
           );
         })}
