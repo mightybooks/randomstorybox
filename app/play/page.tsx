@@ -7,7 +7,7 @@ import "./play.css";
 
 import { useGeneration } from "../../hooks/useGeneration";
 import { useLoadingLines } from "../../hooks/useLoadingLines";
-import { QuestionGroup } from "../../components/QuestionGroup";
+import QuestionGroup from "../../components/QuestionGroup";
 import { ResultView } from "../../components/ResultView";
 import { ActionsBar } from "../../components/ActionsBar";
 import { copyFallback, shareResult, decodeStoryBase64 } from "../../lib/share";
