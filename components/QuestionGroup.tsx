@@ -133,7 +133,7 @@ function QuestionGroup({ q, selected, onSelect, disabled }: Props) {
           return (
             <div
               key={opt.value}
-              ref={(el) => (itemRefs.current[idx] = el)}
+              ref={(el: HTMLDivElement | null) => { itemRefs.current[idx] = el; }}
               className={`rsb-option ${checked ? "active" : ""} ${
                 disabled ? "is-disabled" : ""
               }`}
