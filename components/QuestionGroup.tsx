@@ -16,6 +16,14 @@ export function QuestionGroup({
 }) {
   const groupName = `q${q.id}`;
   const labelId = `lbl-${groupName}`;
+  
+  const toSlug = (s: string) =>
+  s.toString().trim().toLowerCase()
+    .replace(/\s+/g, "-")        
+    .replace(/[^\w\-]+/g, "")    
+    .replace(/\-\-+/g, "-")      
+    .replace(/^-+/, "")          
+    .replace(/-+$/, "");         
 
   return (
     <section>
@@ -28,7 +36,7 @@ export function QuestionGroup({
       {/* radiogroup 역할 명시 + 라벨 연결 */}
       <div className="rsb-options" role="radiogroup" aria-labelledby={labelId}>
         {q.options.map((opt) => {
-          const id = `${groupName}-${opt.value}`;
+          const id = `${groupName}-${toSlug(opt.value)}`;
           const isActive = selected === opt.value;
           const isDisabled = !!disabled;
 
