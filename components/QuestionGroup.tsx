@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 
 export type QOption = { label: string; value: string };
 export type QItem = { id: number; text: string; options: QOption[] };
@@ -22,14 +22,13 @@ function QuestionGroup({ q, selected, onSelect, disabled }: Props) {
   const itemRefs = useRef<Array<HTMLDivElement | null>>([]);
   const focusIndexRef = useRef<number>(selectedIndex);
 
-  // 질문 바뀔 때 초기화
+  // 질문 바뀔 때 포커스 인덱스만 동기화 (refs 배열은 그대로 유지)
   useEffect(() => {
-    itemRefs.current = [];
     focusIndexRef.current = selectedIndex;
   }, [q.id, selectedIndex]);
 
   // roving tabindex 적용
-  useEffect(() => {
+  useLayoutEffect(() => {
     itemRefs.current.forEach((el, idx) => {
       if (!el) return;
       el.tabIndex = disabled ? -1 : idx === focusIndexRef.current ? 0 : -1;
@@ -37,7 +36,7 @@ function QuestionGroup({ q, selected, onSelect, disabled }: Props) {
   }, [q.id, disabled, q.options.length, selectedIndex]);
 
   // 문항 진입 시(또는 전환 시) 옵션에 자동 포커스
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (disabled) return;
     const id = requestAnimationFrame(() => {
       const el = itemRefs.current[focusIndexRef.current];
