@@ -1,138 +1,100 @@
-import React, { useEffect, useMemo, useRef, KeyboardEvent } from "react";
+// 변경/추가 포인트만 발췌
+import React, { useEffect, useMemo, useRef, useCallback } from "react";
 
-type QOption = { label: string; value: string };
-export type QItem = { id: number; text: string; options: QOption[] };
+export function QuestionGroup({ q, selected, onSelect, disabled }: { /* ... */ }) {
+  const selectedIndex = useMemo(() => {
+    const i = q.options.findIndex(o => o.value === selected);
+    return i >= 0 ? i : 0;
+  }, [q.options, selected]);
 
-const toSlug = (s: string) =>
-  s.toString().trim().toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w\-]+/g, "")
-    .replace(/\-\-+/g, "-")
-    .replace(/^-+/, "")
-    .replace(/-+$/, "");
+  const itemRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const focusIndexRef = useRef<number>(selectedIndex);
 
-export function QuestionGroup({
-  q,
-  selected,
-  onSelect,
-  disabled,
-}: {
-  q: QItem;
-  selected?: string;
-  onSelect: (value: string) => void;
-  disabled?: boolean;
-}) {
-  const groupName = `q${q.id}`;
-  const labelId = `lbl-${groupName}`;
-
-  const items = useMemo(() => q.options.map((o) => o.value), [q.options]);
-  const selectedIndex = Math.max(0, items.findIndex((v) => v === selected));
-  const focusIndexRef = useRef<number>(selectedIndex >= 0 ? selectedIndex : 0);
-  const spanRefs = useRef<(HTMLSpanElement | null)[]>([]);
-
-  // 초기 포커스 인덱스 세팅(로빙 탭인덱스: 하나만 0, 나머지는 -1)
+  // ★ 질문 바뀔 때 refs 초기화
   useEffect(() => {
-    focusIndexRef.current = selectedIndex >= 0 ? selectedIndex : 0;
-    spanRefs.current.forEach((el, idx) => {
-      if (!el) return;
-      el.tabIndex = disabled ? -1 : (idx === focusIndexRef.current ? 0 : -1);
-    });
-  }, [selectedIndex, disabled, items.length]);
+    itemRefs.current = [];
+    focusIndexRef.current = selectedIndex;
+  }, [q.id, selectedIndex]);
 
+  // ★ 로빙 탭인덱스 재계산
   useEffect(() => {
-  spanRefs.current = [];
-  focusIndexRef.current = Math.max(0, items.findIndex((v) => v === selected));
-}, [q.id]);
-
-  const moveFocus = (next: number) => {
-    const len = items.length;
-    const clamped = Math.max(0, Math.min(next, len - 1));
-    focusIndexRef.current = clamped;
-    spanRefs.current.forEach((el, idx) => {
+    itemRefs.current.forEach((el, idx) => {
       if (!el) return;
-      el.tabIndex = disabled ? -1 : (idx === clamped ? 0 : -1);
+      el.tabIndex = disabled ? -1 : idx === focusIndexRef.current ? 0 : -1;
     });
-    spanRefs.current[clamped]?.focus();
-  };
+  }, [q.id, disabled, q.options.length, selectedIndex]);
 
-  const handleKey = (e: KeyboardEvent<HTMLSpanElement>, idx: number, value: string) => {
-    // Tab은 기본 동작 그대로 두어 그룹에서 빠져나가게 함
-    if (e.key === " " || e.key === "Enter") {
-      e.preventDefault();
-      if (!disabled) onSelect(value);
-      return;
+  // ★ 최초 진입(또는 질문 전환) 시 옵션으로 자동 포커스
+  useEffect(() => {
+    if (disabled) return;
+    // 마운트가 끝난 뒤 안전하게 포커스
+    requestAnimationFrame(() => {
+      const el = itemRefs.current[focusIndexRef.current];
+      if (el) el.focus();
+    });
+  }, [q.id, disabled]);
+
+  const moveFocus = useCallback((delta: number) => {
+    if (disabled) return;
+    const count = q.options.length;
+    const next = (focusIndexRef.current + delta + count) % count;
+    focusIndexRef.current = next;
+    const el = itemRefs.current[next];
+    if (el) {
+      el.tabIndex = 0;
+      el.focus();
     }
-    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-      e.preventDefault();
-      moveFocus(idx + 1);
-      return;
+  }, [disabled, q.options.length]);
+
+  const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>, idx: number, opt: { value: string }) => {
+    if (disabled) return;
+    switch (e.key) {
+      case "ArrowRight":
+      case "ArrowDown":
+        e.preventDefault(); moveFocus(1); break;
+      case "ArrowLeft":
+      case "ArrowUp":
+        e.preventDefault(); moveFocus(-1); break;
+      case "Home":
+        e.preventDefault(); focusIndexRef.current = 0; itemRefs.current[0]?.focus(); break;
+      case "End":
+        e.preventDefault(); {
+          const last = q.options.length - 1;
+          focusIndexRef.current = last;
+          itemRefs.current[last]?.focus();
+        }
+        break;
+      case " ":
+      case "Enter":
+        e.preventDefault(); onSelect(opt.value); break;
+      default:
+        // Tab, Shift+Tab은 막지 않습니다 → 자연스러운 그룹 탈출/복귀
+        break;
     }
-    if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-      e.preventDefault();
-      moveFocus(idx - 1);
-      return;
-    }
-    if (e.key === "Home") {
-      e.preventDefault();
-      moveFocus(0);
-      return;
-    }
-    if (e.key === "End") {
-      e.preventDefault();
-      moveFocus(items.length - 1);
-      return;
-    }
-  };
+  }, [disabled, moveFocus, onSelect, q.options.length]);
 
   return (
-    <section>
-      <div className="rsb-qhead">
-        <span className="rsb-qno">Q{q.id}</span>
-        <span id={labelId} className="rsb-qtext">{q.text}</span>
-      </div>
-
-      <div className="rsb-options" role="radiogroup" aria-labelledby={labelId}>
-        {q.options.map((opt, i) => {
-          const id = `${groupName}-${toSlug(opt.value)}`;
-          const isActive = selected === opt.value;
-          const isDisabled = !!disabled;
-
+    <section className="rsb-qsection" key={q.id}>
+      {/* ... 헤더 ... */}
+      <div className="rsb-options" role="radiogroup" aria-labelledby={`q${q.id}-label`}>
+        <span id={`q${q.id}-label`} className="sr-only">Q{q.id} 보기 선택</span>
+        {q.options.map((opt, idx) => {
+          const checked = selected === opt.value;
           return (
-            <label
-              key={id}
-              htmlFor={id}
-              className={`rsb-option ${isActive ? "active" : ""} ${isDisabled ? "is-disabled" : ""}`}
-              aria-disabled={isDisabled || undefined}
+            <div
+              key={opt.value}
+              ref={(el) => (itemRefs.current[idx] = el)}
+              className={`rsb-option ${checked ? "active" : ""} ${disabled ? "is-disabled" : ""}`}
+              role="radio"
+              aria-checked={checked}
+              aria-disabled={disabled || undefined}
+              tabIndex={-1}
+              onKeyDown={(e) => onKeyDown(e, idx, opt)}
+              onClick={() => { if (!disabled) { focusIndexRef.current = idx; onSelect(opt.value); } }}
             >
-              {/* 스크린리더/폼 제출용(탭 순서에서 제외) */}
-              <input
-                id={id}
-                type="radio"
-                name={groupName}
-                value={opt.value}
-                checked={isActive}
-                onChange={() => onSelect(opt.value)}
-                disabled={isDisabled}
-                className="sr-only"
-                tabIndex={-1}
-                aria-hidden="true"
-              />
-
-              {/* 실제 키보드 포커스 대상(로빙 탭인덱스) */}
-<span
-  ref={(el) => { spanRefs.current[i] = el; }}
-  className="rsb-option-visual"
-  role="radio"
-  aria-checked={isActive}
-  aria-disabled={isDisabled || undefined}
-  // tabIndex는 useEffect에서 0/-1로 설정
-  onKeyDown={(e) => handleKey(e, i, opt.value)}
-  onClick={() => !isDisabled && onSelect(opt.value)}
-  data-testid={`option-${groupName}-${toSlug(opt.value)}`}
->
-  {opt.label}
-</span>
-            </label>
+              <input type="radio" name={`q${q.id}`} value={opt.value} checked={checked} readOnly className="sr-only" />
+              <span>{opt.label}</span>
+            </div>
           );
         })}
       </div>
