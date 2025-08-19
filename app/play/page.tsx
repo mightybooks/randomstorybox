@@ -68,11 +68,13 @@ export default function PlayPage(){
   const [randomBanner, setRandomBanner] = useState("");
 
   const { phase: genPhase, text: genText, error: genError, isSubmitting, generate } = useGeneration();
-  const loadingIdx = useLoadingLines(phase === "writing", LOADING_LINES.length, loadingInterval);
 
   // 모션 민감 사용자 대응: 로딩 문구 순환 속도 완화
   const reduceMotion = useReducedMotion();
   const loadingInterval = reduceMotion ? 3500 : 2000;
+
+  // 선언 이후에 훅 호출 + genPhase 기준으로 로딩 여부 판단
+  const loadingIdx = useLoadingLines(genPhase === "writing", LOADING_LINES.length, loadingInterval);
   
   // (추가) 토스트 훅
   const { toasts, addToast, removeToast } = useToast();
