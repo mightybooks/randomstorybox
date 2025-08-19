@@ -96,10 +96,15 @@
 .rsb-btn:hover { background: #f8f4ef; }
 .rsb-btn:active { transform: translateY(1px); }
 .rsb-btn:disabled { opacity: .5; cursor: not-allowed; }
+/* 기존 진한 검정 대신, 배경보다 살짝 진한 따뜻한 톤 */
 .rsb-primary {
-  background: #2b2117; color: #fff; border-color: #2b2117;
+  background: #e8d9c5;     /* 배경(#faf7f2)보다 조금 더 진한 베이지 */
+  border-color: #e2d1b7;
+  color: #2b2117;          /* 어두운 갈색 텍스트 → 가독성 11.3:1 */
 }
-.rsb-primary:hover { background: #3a2d21; }
+.rsb-primary:hover  { background: #decbb0; }
+.rsb-primary:active { background: #d5c1a3; }
+
 
 /* 진행바 */
 .rsb-progress { height: 7px; background: #f1ece6; border-radius: 999px; margin-top: 18px; overflow: hidden; }
